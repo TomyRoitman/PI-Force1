@@ -2,11 +2,11 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
-
+map.png
+/image_processing/calibration/images
 # C extensions
 *.so
-
+try_depth.py
 # Distribution / packaging
 .Python
 build/
