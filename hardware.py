@@ -43,7 +43,7 @@ class PIMachine:
     
     def acquire_pins(self,  component_name: str, *pin_numbers):
         
-        return functools.reduce(lambda a, b: a and b, [self.gpio_pins[pin].acquire_pin(component_name) for pin in pin_numbers])
+        return all([self.gpio_pins[pin].acquire_pin(component_name) for pin in pin_numbers])
 
 
         # already_acquired = [pin for pin in pins if self.gpio_pins[pin].is_acquired() and self.gpio_pins[pin].get_component_name() != component_name]
@@ -59,7 +59,7 @@ class PIMachine:
         """
         Trying to release pins. Returns True if all pins released correctly, False otherwise
         """
-        return functools.reduce(lambda a, b: a and b, [self.gpio_pins[pin].release_pin(component_name) for pin in pin_numbers])
+        return all([self.gpio_pins[pin].release_pin(component_name) for pin in pin_numbers])
 
     
     def clean_up(self):
