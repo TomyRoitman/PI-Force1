@@ -14,7 +14,7 @@ class State(Enum):
     Stop = 2
 
 class ServoMotor(Component):
-    def __init__(self, id: str, degree=0, machine: PIMachine, gpio_pins):
+    def __init__(self, id: str, machine: PIMachine, gpio_pins, degree:float=0):
         self.id = id
         self.name = f"ServoMotor-{self.id}"
         self.machine = machine
@@ -29,14 +29,13 @@ class ServoMotor(Component):
         self.degree = degree
 
 class DCMotor(Component):
-    def __init__(self, id: str, machine: PIMachine, gpio_pins):
-        self.id = id
-        self.name = f"DCMotor-{self.id}"
+    def __init__(self, name: str, machine: PIMachine, gpio_pins):
+        self.name = name
         self.machine = machine
         self.gpio_pins = gpio_pins
         super().__init__(self.name, self.machine, gpio_pins)
         self.direction = Direction.Forward
-        self.speed = Low
+        self.speed = Speed.Low
         self.state = State.Stop
 
     def rotate(self, direction: Direction=Direction.Forward, speed: Speed=Speed.Low):
@@ -46,3 +45,5 @@ class DCMotor(Component):
     
     def stop(self):
         self.state = State.Stop
+
+    

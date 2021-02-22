@@ -1,7 +1,7 @@
 from hardware import PIMachine
 import threading
 import json
-
+from motor import DCMotor, ServoMotor, Speed, State
 
 GPIO_PIN_DISTRIBUTION_PATH="gpio_pin_distribution.json"
 
@@ -20,10 +20,16 @@ class Car():
 
     def __initialize_DC_controllers(self):
         DC_controllers = self.pin_distribution["DCControllers"]
-        print(DC_controllers)
+        for controller_name, pins in DC_controllers.items():
+            a = DCMotor(controller_name, self.machine, [pin for pin in pins.values()])
+            print(a.__dict__)      
+        for controller_name, pins in DC_controllers.items():
+            a = DCMotor(controller_name, self.machine, [pin for pin in pins.values()])
+            print(a.__dict__)           
     
     def __initialize_DC_motors(self):
-            pass
+            DC_controllers = self.pin_distribution["DCMotors"]
+            print(DC_controllers)
     
     def __initialize_servo_motors(self):
             pass
@@ -34,7 +40,8 @@ class Car():
 
 
 def main():
-    pass
+    car = Car()
+
 
 if __name__ == "__main__":
     main()
