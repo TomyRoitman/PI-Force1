@@ -1,11 +1,16 @@
 from enum import Enum
 import threading
 import functools
+import RPI.GPIO as GPIO
 
 START_PIN_INDEX = 2
 END_PIN_INDEX = 27
 
-class Pin:
+class PinType:
+    "en = 1,
+    "in" = 2
+
+class PinSlot:
 
     def __init__(self, acquired:bool=False, component_name:str=None):
         self.acquired=acquired
@@ -37,9 +42,11 @@ class PIMachine:
     def __init__(self):
         self.gpio_pins = self.__create_gpio_pins_data_structure()
         self.pin_lock = threading.Lock()
+        GPIO.setmode(GPIO.BCM) # initialize machine
+        
 
     def __create_gpio_pins_data_structure(self):
-        return {i: Pin() for i in range(START_PIN_INDEX, END_PIN_INDEX)}
+        return {i: PinSlot() for i in range(START_PIN_INDEX, END_PIN_INDEX)}
     
     def acquire_pins(self,  component_name: str, *pin_numbers):
         return all([self.gpio_pins[pin].acquire_pin(component_name) for pin in pin_numbers])
@@ -71,11 +78,23 @@ class Component:
         self.name = name
         self.machine=machine
         self.gpio_pins = gpio_pins
-        if not self.acquire_pins():
+        if not self.__acquire_pins():
             raise ValueError("Pins already taken")
+        self.pin_classification = {}
 
-    def acquire_pins(self):
+    def __acquire_pins(self):
         return self.machine.acquire_pins(self.name, *self.gpio_pins) if self.gpio_pins else False
+    
+    def initialize_en_pin(self, pin_num):
+        GPIO.setup(pin_num,GPIO.OUT)
+        self.p = GPIO.PWM(pin_num,1000)
+        self.p.start(25)
+        self.pin_classification[pin_num] = PinType.
+    
+    def initialize_in_pin(self, pin_num):
+        GPIO.setup(pin_num, GPIO.OUT)
+        GPIO.output(pin_num, GPIO.LOW)
+
 
 if __name__ == "__main__":
     machine = PIMachine()
