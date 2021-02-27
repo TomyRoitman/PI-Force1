@@ -14,19 +14,27 @@ class Car():
         self.__load_gpio_distribution()
 
         self.lock = threading.Lock()
-        self.__initialize_DC_controllers()
-        self.__initialize_DC_motors()
+        self.controllers = {}
+        self.wheel_motors = {}
+        self.__initialize_wheel_controllers()
+        self.__initialize_wheel_DC_motors()
         self.__initialize_servo_motors()
 
-    def __initialize_DC_controllers(self):
+    def __initialize_wheel_controllers(self):
         DC_controllers = self.pin_distribution["DCControllers"]
+        #print(DC_controllers)
         for controller_name, pins in DC_controllers.items():
-            a = DCMotor(controller_name, self.machine, pins)
-            print(a.__dict__)      
-    
-    def __initialize_DC_motors(self):
-            DC_controllers = self.pin_distribution["DCMotors"]
-            print(DC_controllers)
+            #print(DC_controllers[controller_name])
+            self.controllers[controller_name] = DCMotor(controller_name, self.machine, pins) # DC_controllers[controller_name]) #pins)
+            #print(self.wheels[controller_name].__dict__)      
+            print(f"Initialized {controller_name} with pins: {pins}")
+
+    def __initialize_wheel_motors(self):
+        wheel_DC_motors = self.pin_distribution["WheelDCMotors"]
+        for wheel_group in wheel_motors.keys():
+            for wheel_motor_name, pins in wheel_DC_motors[wheel_group]     
+                self.wheel_DC_motors[wheel_group][wheel_motor_name] = DCMotor(wheel_motor_name, self.machine, pins)            
+#print(DC_controllers)
     
     def __initialize_servo_motors(self):
             pass
