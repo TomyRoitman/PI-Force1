@@ -2,6 +2,7 @@ from hardware import PIMachine
 import threading
 import json
 from motor import DCMotorController, DCMotor, ServoMotor, Speed, State
+import time
 
 GPIO_PIN_DISTRIBUTION_PATH="gpio_pin_distribution.json"
 
@@ -23,9 +24,15 @@ class Car():
     def go_forward(self):
         for wheel_group, wheel_motors in self.wheel_DC_motors.items():
             for wheel_motor_name, wheel_motor_object in wheel_motors.items():
-                wheel_motor_object.rotate_forward()
+                wheel_motor_object.go_forward()
     def go_backwards(self):
-        pass
+        for wheel_group, wheel_motors in self.wheel_DC_motors.items():
+            for wheel_motor_name, wheel_motor_object in wheel_motors.items():
+                wheel_motor_object.go_backwards()
+    def stop(self):
+        for wheel_group, wheel_motors in self.wheel_DC_motors.items():
+            for wheel_motor_name, wheel_motor_object in wheel_motors.items():
+                wheel_motor_object.stop()
 
     def __initialize_wheel_controllers(self):
         DC_controllers = self.pin_distribution["DCControllers"]
@@ -60,8 +67,18 @@ class Car():
 
 def main():
     car = Car()
-    car.go_forward()
-
+    while True:
+        query = input("f - forward, b - backward, s - stop")
+        if query == "f":
+            car.go_forward()
+        elif query == "b":
+            car.go_backwards()
+        elif query == "s":
+            car.stop()
+        else:
+            print(f"Command {query} unknown, skipping")
+    #time.sleep(5000)
+    car.machine.clean_up()
 
 if __name__ == "__main__":
     main()

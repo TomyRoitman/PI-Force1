@@ -44,6 +44,7 @@ class PinSlot:
 class PIMachine:
 
     def __init__(self):
+        self.clean_up()
         self.gpio_pins = self.__create_gpio_pins_data_structure()
         self.pin_lock = threading.Lock()
         GPIO.setmode(GPIO.BCM) # initialize machine
@@ -106,7 +107,7 @@ class Component:
         self.p.ChangeDutyCycle(pwm_value)
     
     def update_in_pin(self, pin_num, pin_state: InPinState):
-        if pin_num not in self.pin_classification.keys:
+        if pin_num not in self.pin_classification.keys():
             raise ValueError(f"No pin is registered for slot {pin_num}!")
         if self.pin_classification[pin_num] != PinType.IN:
             raise ValueError(f"Pin slot isn't registered")
@@ -114,9 +115,9 @@ class Component:
         if type(pin_state) is not InPinState:
             raise TypeError("Pin state type is not InPinState")
         if pin_state == InPinState.LOW:
-            GPIO.output(in1,GPIO.LOW)
+            GPIO.output(pin_num, GPIO.LOW)
         elif pin_state == InPinState.HIGH:
-            GPIO.output(in1,GPIO.HIGH)
+            GPIO.output(pin_num, GPIO.HIGH)
         else:
             raise ValueError(f"Pin state {pin_state} unknown")
 
