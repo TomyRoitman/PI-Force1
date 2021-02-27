@@ -27,7 +27,22 @@ class ServoMotor(Component):
         TODO: Change degree
         """
         self.degree = degree
-    
+
+class DCMotorController(Component):
+
+    def __init__(self, name: str, machine: PIMachine, gpio_pins_dict):
+        self.name = name
+        self.machine = machine
+        self.gpio_pins_dict = gpio_pins_dict
+        super().__init__(self.name, self.machine, gpio_pins_dict.values())
+
+    def initialize_pins(self):
+        for pin_type, pin_number in self.gpio_pins_dict.items():
+            if pin_type == "en":
+                self.initialize_en_pin(pin_number)
+            elif pin_type == "in":
+                self.initialize_in_pin(pin_number)
+
 class DCMotor(Component):
 
     speed_pwm = {
@@ -38,12 +53,12 @@ class DCMotor(Component):
 	"MAX": 75 
     }
 
-    def __init__(self, name: str, machine: PIMachine, gpio_pins):
+    def __init__(self, name: str, machine: PIMachine, gpio_pins_dict):
         self.name = name
         self.machine = machine
         self.gpio_pins_dict = gpio_pins
-        print(self.gpio_pins_dict)
-        super().__init__(self.name, self.machine, gpio_pins.values())
+        # print(self.gpio_pins_dict)
+        super().__init__(self.name, self.machine, gpio_pins_dict.values())
         self.direction = Direction.Forward
         self.speed = Speed.Low
         self.state = State.Stop
