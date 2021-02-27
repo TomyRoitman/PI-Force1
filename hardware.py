@@ -1,14 +1,18 @@
 from enum import Enum
 import threading
 import functools
-import RPI.GPIO as GPIO
+import RPi.GPIO as GPIO
 
 START_PIN_INDEX = 2
 END_PIN_INDEX = 27
 
-class PinType:
-    "en = 1,
-    "in" = 2
+class PinType(Enum):
+    EN = 1,
+    IN = 2
+
+class InPinState(Enum):
+    LOW=1,
+    HIGH=2  
 
 class PinSlot:
 
@@ -69,7 +73,7 @@ class PIMachine:
 
     
     def clean_up(self):
-        pass
+        GPIO.cleanup()
 
 
 class Component:
@@ -89,11 +93,32 @@ class Component:
         GPIO.setup(pin_num,GPIO.OUT)
         self.p = GPIO.PWM(pin_num,1000)
         self.p.start(25)
-        self.pin_classification[pin_num] = PinType.
+        self.pin_classification[pin_num] = PinType.EN
     
     def initialize_in_pin(self, pin_num):
         GPIO.setup(pin_num, GPIO.OUT)
         GPIO.output(pin_num, GPIO.LOW)
+        self.pin_classification[pin_num] = PinType.IN
+    
+    def update_pwm(self, pin_num, pwm_value):
+        if not PinType.EN in self.pin_classification.values():
+            raise ValueError(f"En pin is not registered!")
+        self.p.ChangeDutyCycle(pwm_value)
+    
+    def update_in_pin(self, pin_num, pin_state: InPinState):
+        if pin_num not in self.pin_classification.keys:
+            raise ValueError(f"No pin is registered for slot {pin_num}!")
+        if self.pin_classification[pin_num] != PinType.IN:
+            raise ValueError(f"Pin slot isn't registered")
+        
+        if type(pin_state) is not InPinState:
+            raise TypeError("Pin state type is not InPinState")
+        if pin_state == InPinState.LOW:
+            GPIO.output(in1,GPIO.LOW)
+        elif pin_state == InPinState.HIGH:
+            GPIO.output(in1,GPIO.HIGH)
+        else:
+            raise ValueError(f"Pin state {pin_state} unknown")
 
 
 if __name__ == "__main__":

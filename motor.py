@@ -28,12 +28,17 @@ class ServoMotor(Component):
         """
         self.degree = degree
 
+class SpeedPWM(Enum):
+    
 class DCMotor(Component):
+
+    speed_pwm = {LOW = 25, MEDIUM = 50, HIGH = 75, MIN = 25, MAX = 75}
+
     def __init__(self, name: str, machine: PIMachine, gpio_pins):
         self.name = name
         self.machine = machine
         self.gpio_pins = gpio_pins
-        super().__init__(self.name, self.machine, gpio_pins)
+        super().__init__(self.name, self.machine, gpio_pins.values())
         self.direction = Direction.Forward
         self.speed = Speed.Low
         self.state = State.Stop
