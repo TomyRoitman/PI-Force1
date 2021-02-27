@@ -23,9 +23,6 @@ class Car():
         for controller_name, pins in DC_controllers.items():
             a = DCMotor(controller_name, self.machine, pins)
             print(a.__dict__)      
-        for controller_name, pins in DC_controllers.items():
-            a = DCMotor(controller_name, self.machine, pins)
-            print(a.__dict__)           
     
     def __initialize_DC_motors(self):
             DC_controllers = self.pin_distribution["DCMotors"]
