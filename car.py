@@ -20,6 +20,13 @@ class Car():
         self.__initialize_wheel_DC_motors()
         self.__initialize_servo_motors()
 
+    def go_forward(self):
+        for wheel_group, wheel_motors in self.wheel_DC_motors.items():
+            for wheel_motor_name, wheel_motor_object in wheel_motors.items():
+                wheel_motor_object.rotate_forward()
+    def go_backwards(self):
+        pass
+
     def __initialize_wheel_controllers(self):
         DC_controllers = self.pin_distribution["DCControllers"]
         #print(DC_controllers)
@@ -53,6 +60,7 @@ class Car():
 
 def main():
     car = Car()
+    car.go_forward()
 
 
 if __name__ == "__main__":

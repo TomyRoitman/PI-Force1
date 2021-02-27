@@ -1,4 +1,4 @@
-from hardware import Component, PIMachine
+from hardware import Component, PIMachine, InPinState
 from enum import Enum
 
 class Direction(Enum):
@@ -66,16 +66,25 @@ class DCMotor(Component):
         self.initialize_pins()
 
 
-    def rotate(self, direction: Direction=Direction.Forward, speed: Speed=Speed.Low):
+    def go_forward(self, direction: Direction=Direction.Forward, speed: Speed=Speed.Low):
         self.state = State.Rotate
         self.direction = Direction
         self.speed = speed
+        self.update_in_pin(self.gpio_pins_dict["in1"], InPinState.HIGH)
+        self.update_in_pin(self.gpio_pins_dict["in2"], InPinState.LOW)
+    
+    def go_backwards(self, direction: Direction=Direction.Forward, speed: Speed=Speed.Low):
+        self.state = State.Rotate
+        self.direction = Direction
+        self.speed = speed
+        self.update_in_pin(self.gpio_pins_dict["in1"], InPinState.LOW)
+        self.update_in_pin(self.gpio_pins_dict["in2"], InPinState.HIGH)
 
     def initialize_pins(self):
         for pin_type, pin_number in self.gpio_pins_dict.items():
-            if pin_type == "en":
+            if  "en" in pin_type:
                 self.initialize_en_pin(pin_number)
-            elif pin_type == "in":
+            elif "in" in pin_type:
                 self.initialize_in_pin(pin_number)
 
 

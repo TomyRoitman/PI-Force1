@@ -92,7 +92,7 @@ class Component:
     def initialize_en_pin(self, pin_num):
         GPIO.setup(pin_num,GPIO.OUT)
         self.p = GPIO.PWM(pin_num,1000)
-        self.p.start(25)
+        self.p.start(75)
         self.pin_classification[pin_num] = PinType.EN
     
     def initialize_in_pin(self, pin_num):
