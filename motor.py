@@ -56,7 +56,7 @@ class DCMotor(Component):
     def __init__(self, name: str, machine: PIMachine, gpio_pins_dict):
         self.name = name
         self.machine = machine
-        self.gpio_pins_dict = gpio_pins
+        self.gpio_pins_dict = gpio_pins_dict
         # print(self.gpio_pins_dict)
         super().__init__(self.name, self.machine, gpio_pins_dict.values())
         self.direction = Direction.Forward

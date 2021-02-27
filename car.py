@@ -1,7 +1,7 @@
 from hardware import PIMachine
 import threading
 import json
-from motor import DCMotor, ServoMotor, Speed, State
+from motor import DCMotorController, DCMotor, ServoMotor, Speed, State
 
 GPIO_PIN_DISTRIBUTION_PATH="gpio_pin_distribution.json"
 
@@ -29,14 +29,18 @@ class Car():
             #print(self.wheels[controller_name].__dict__)      
             print(f"Initialized controller \"{controller_name}\" with pins: {pins}")
 
-    def __initialize_wheel_motors(self):
+    def __initialize_wheel_DC_motors(self):
         wheel_DC_motors_dict = self.pin_distribution["WheelDCMotors"]
-        for wheel_group in wheel_motors.keys():
+        print("1", wheel_DC_motors_dict)
+        for wheel_group, wheel_motors in wheel_DC_motors_dict.items():
+            print("2", wheel_group)
             if not wheel_group in self.wheel_DC_motors:
-                wheel_DC_motors[wheel_group] = {}
-            for wheel_motor_name, pins in wheel_DC_motors[wheel_group]     
+                self.wheel_DC_motors[wheel_group] = {}
+            print("2a", wheel_group, wheel_DC_motors_dict[wheel_group])
+            for wheel_motor_name, pins in wheel_motors.items():     
+                print("3", wheel_motor_name, pins)
                 self.wheel_DC_motors[wheel_group][wheel_motor_name] = DCMotor(wheel_motor_name, self.machine, pins)
-                print(f"Initialized wheel DC motor \"{wheel_motor_name}\" with pins: {pins}")          
+                print("4", f"Initialized wheel DC motor \"{wheel_group}-{wheel_motor_name}\" with pins: {pins}")          
 #print(DC_controllers)
     
     def __initialize_servo_motors(self):

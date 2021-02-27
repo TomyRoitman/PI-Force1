@@ -8,7 +8,7 @@
         }
     },
 
-    "DCMotors":{
+    "WheelDCMotors":{
         "FrontWheels":{
             "left":{
                 "in1": 11,
