@@ -47,6 +47,29 @@ class Car():
             for wheel_motor_name, wheel_motor_object in wheel_motors.items():
                 wheel_motor_object.high_speed()
 
+    def turn_right(self):
+        """
+        TODO: Add angle
+        """
+        for wheel_group, wheel_motors in self.wheel_DC_motors.items():
+            for wheel_motor_name, wheel_motor_object in wheel_motors.items():
+                if "left" in wheel_motor_name:
+                    wheel_motor_object.go_forward()
+                if "right" in wheel_motor_name:
+                    wheel_motor_object.go_backwards()
+    
+    def turn_left(self):
+        """
+        TODO: Add angle
+        """
+        for wheel_group, wheel_motors in self.wheel_DC_motors.items():
+            for wheel_motor_name, wheel_motor_object in wheel_motors.items():
+                if "left" in wheel_motor_name:
+                    wheel_motor_object.go_backwards()
+                if "right" in wheel_motor_name:
+                    wheel_motor_object.go_forward()
+
+
     def __initialize_wheel_controllers(self):
         DC_controllers = self.pin_distribution["DCControllers"]
         #print(DC_controllers)
@@ -81,7 +104,17 @@ class Car():
 def main():
     car = Car()
     while True:
-        query = input("\nf - forward, b - backward, s - stop, l - low, m - medium, h - high\n")
+        query = input("""
+        \nf - forward
+        \nb - backward
+        \ns - stop
+        \nl - low
+        \nm - medium
+        \nh - high
+        \ntr - turn right
+        \ntl - turn left
+        \nq - quit
+        """)
         if query == "f":
             car.go_forward()
         elif query == "b":
@@ -94,6 +127,12 @@ def main():
             car.medium()
         elif query == "h":
             car.high()
+        elif query == "tr":
+            car.turn_right()
+        elif query == "tl":
+            car.turn_left()
+        elif query == "q":
+            break
         else:
             print(f"Command {query} unknown, skipping")
     #time.sleep(5000)
