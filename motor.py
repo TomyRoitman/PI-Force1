@@ -87,6 +87,15 @@ class DCMotor(Component):
         self.update_in_pin(self.gpio_pins_dict["in1"], InPinState.HIGH)
         self.update_in_pin(self.gpio_pins_dict["in2"], InPinState.HIGH)
 
+    def low_speed(self):
+        self.update_pwm(self.gpio_pins_dict["en"], 25)
+    
+    def medium_speed(self):
+        self.update_pwm(self.gpio_pins_dict["en"], 50)
+
+    def high_speed(self):
+        self.update_pwm(self.gpio_pins_dict["en"], 75)
+
     def initialize_pins(self):
         for pin_type, pin_number in self.gpio_pins_dict.items():
             if  "en" in pin_type:

@@ -1,13 +1,4 @@
 {
-    "DCControllers": {
-        "FrontWheels":{
-            "en": 21
-        },
-        "BackWheels":{
-            "en": 26
-        }
-    },
-
     "WheelDCMotors":{
         "FrontWheels":{
             "left":{
@@ -21,10 +12,12 @@
         },
         "BackWheels":{
             "left":{
+                "en": 26,
                 "in1": 5,
                 "in2": 6
             },
             "right":{
+                "en": 21,
                 "in1": 13,
                 "in2": 19
             }

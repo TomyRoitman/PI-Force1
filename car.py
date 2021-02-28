@@ -15,9 +15,9 @@ class Car():
         self.__load_gpio_distribution()
 
         self.lock = threading.Lock()
-        self.controllers = {}
+        # self.controllers = {}
         self.wheel_DC_motors = {}
-        self.__initialize_wheel_controllers()
+        # self.__initialize_wheel_controllers()
         self.__initialize_wheel_DC_motors()
         self.__initialize_servo_motors()
 
@@ -33,6 +33,19 @@ class Car():
         for wheel_group, wheel_motors in self.wheel_DC_motors.items():
             for wheel_motor_name, wheel_motor_object in wheel_motors.items():
                 wheel_motor_object.stop()
+    def low(self):
+        for wheel_group, wheel_motors in self.wheel_DC_motors.items():
+            for wheel_motor_name, wheel_motor_object in wheel_motors.items():
+                wheel_motor_object.low()
+    def medium(self):
+        for wheel_group, wheel_motors in self.wheel_DC_motors.items():
+            for wheel_motor_name, wheel_motor_object in wheel_motors.items():
+                wheel_motor_object.medium()
+    
+    def high(self):
+        for wheel_group, wheel_motors in self.wheel_DC_motors.items():
+            for wheel_motor_name, wheel_motor_object in wheel_motors.items():
+                wheel_motor_object.high()
 
     def __initialize_wheel_controllers(self):
         DC_controllers = self.pin_distribution["DCControllers"]
@@ -68,13 +81,19 @@ class Car():
 def main():
     car = Car()
     while True:
-        query = input("f - forward, b - backward, s - stop")
+        query = input("\nf - forward, b - backward, s - stop, l - low, m - medium, h - high\n")
         if query == "f":
             car.go_forward()
         elif query == "b":
             car.go_backwards()
         elif query == "s":
             car.stop()
+        elif query == "l":
+            car.low()
+        elif query == "m":
+            car.medium()
+        elif query == "h":
+            car.high()
         else:
             print(f"Command {query} unknown, skipping")
     #time.sleep(5000)
