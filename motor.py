@@ -82,10 +82,10 @@ class DCMotor(Component):
 
     def stop(self):
         self.state = State.Rotate
-        self.direction = Direction
-        self.speed = speed
-        self.update_in_pin(self.gpio_pins_dict["in1"], InPinState.LOW)
-        self.update_in_pin(self.gpio_pins_dict["in2"], InPinState.LOW)
+        #self.direction = Direction
+        #self.speed = speed
+        self.update_in_pin(self.gpio_pins_dict["in1"], InPinState.HIGH)
+        self.update_in_pin(self.gpio_pins_dict["in2"], InPinState.HIGH)
 
     def initialize_pins(self):
         for pin_type, pin_number in self.gpio_pins_dict.items():
@@ -95,7 +95,7 @@ class DCMotor(Component):
                 self.initialize_in_pin(pin_number)
 
 
-    def stop(self):
-        self.state = State.Stop
+    #def stop(self):
+        #self.state = State.Stop
 
     

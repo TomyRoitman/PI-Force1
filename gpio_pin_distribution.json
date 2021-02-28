@@ -1,7 +1,7 @@
 {
     "DCControllers": {
         "FrontWheels":{
-            "en": 25
+            "en": 21
         },
         "BackWheels":{
             "en": 26
@@ -21,12 +21,12 @@
         },
         "BackWheels":{
             "left":{
-                "in1": 13,
-                "in2": 19
+                "in1": 5,
+                "in2": 6
             },
             "right":{
-                "in1": 17,
-                "in2": 18
+                "in1": 13,
+                "in2": 19
             }
         }
     }
