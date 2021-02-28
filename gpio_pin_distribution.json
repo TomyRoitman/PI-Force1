@@ -2,10 +2,12 @@
     "WheelDCMotors":{
         "FrontWheels":{
             "left":{
+                "en": 2,
                 "in1": 11,
                 "in2": 12
             },
             "right":{
+                "en": 3,
                 "in1": 22,
                 "in2": 14
             }

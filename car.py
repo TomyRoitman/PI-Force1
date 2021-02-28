@@ -36,16 +36,16 @@ class Car():
     def low(self):
         for wheel_group, wheel_motors in self.wheel_DC_motors.items():
             for wheel_motor_name, wheel_motor_object in wheel_motors.items():
-                wheel_motor_object.low()
+                wheel_motor_object.low_speed()
     def medium(self):
         for wheel_group, wheel_motors in self.wheel_DC_motors.items():
             for wheel_motor_name, wheel_motor_object in wheel_motors.items():
-                wheel_motor_object.medium()
+                wheel_motor_object.medium_speed()
     
     def high(self):
         for wheel_group, wheel_motors in self.wheel_DC_motors.items():
             for wheel_motor_name, wheel_motor_object in wheel_motors.items():
-                wheel_motor_object.high()
+                wheel_motor_object.high_speed()
 
     def __initialize_wheel_controllers(self):
         DC_controllers = self.pin_distribution["DCControllers"]
