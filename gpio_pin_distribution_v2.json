@@ -1,0 +1,33 @@
+{
+    "DCControllers": {
+        "FrontWheels":{
+            "en": 25
+        },
+        "BackWheels":{
+            "en": 26
+        }
+    },
+
+    "DCMotors":{
+        "FrontWheels":{
+            "left":{
+                "in1": 11,
+                "in2": 12
+            },
+            "right":{
+                "in1": 13,
+                "in2": 14
+            }
+        },
+        "BackWheels":{
+            "left":{
+                "in1": 15,
+                "in2": 16
+            },
+            "right":{
+                "in1": 17,
+                "in2": 18
+            }
+        }
+    }
+}
