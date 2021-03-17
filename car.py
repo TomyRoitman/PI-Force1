@@ -113,8 +113,7 @@ def main():
         \nh - high
         \ntr - turn right
         \ntl - turn left
-        \nq - quit
-        """)
+        \nq - quit\n""")
         if query == "f":
             car.go_forward()
         elif query == "b":
