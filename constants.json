@@ -1,0 +1,12 @@
+{
+  "main_tcp_server": {
+    "ip": "0.0.0.0",
+    "port": "10001",
+    "type": "tcp"
+  },
+  "main_udp_server": {
+    "ip": "0.0.0.0",
+    "port": "10002",
+    "type": "udp"
+  }
+}

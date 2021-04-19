@@ -13,8 +13,8 @@ class DefaultEnumMeta(EnumMeta):
 
 
 class MessageCode(Enum):
-    INITIALIZE = "INIT",
-    DISCONNECT = "DISC"
+    INITIALIZE = "INIT",    # = Initialize
+    DISCONNECT = "DISC"     # = Disconnect
 
 
 class TCPMessage():
@@ -49,4 +49,22 @@ class StringMessage(TCPMessage, ABC):
         return self.__content
 
     def format(self):
-        return self.message_code.value
+        return self.message_code.value + self.content.value
+
+
+class ByteMessage(TCPMessage, ABC):
+
+    def __init__(self, message_code: MessageCode, content: bytes):
+        self.__message_code = message_code
+        self.__content = content
+
+    @property
+    def message_code(self):
+        return self.__message_code
+
+    @property
+    def content(self):
+        return self.__content
+
+    def format(self):
+        return self.message_code.value.encode() + self.content.value
