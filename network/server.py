@@ -1,14 +1,10 @@
 import sys
 from abc import ABC, abstractmethod
 import socket
+import threading
 
 
 class Server(socket.socket):
-
-    @property
-    @abstractmethod
-    def handle_client_method(self):
-        pass
 
     @abstractmethod
     def run(self):
@@ -17,18 +13,15 @@ class Server(socket.socket):
 
 class TCPServer(Server, ABC):
 
-    def __init__(self, address, running=True, listen_amount=5):
+    def __init__(self, address, recv_size, handle_client_method, running=True, listen_amount=5):
         super().__init__()
+        self.recv_size = recv_size
+        self.handle_client_method = handle_client_method
         self.address = address
         self.listen_amount = listen_amount
         self.running = True
 
-    def set_handle_client_method(self, method):
-        self.__handle_client_method = method
 
-    @property
-    def handle_client_method(self):
-        return self.__handle_client_method
 
     def run(self):
         self.bind(self.address)
@@ -36,28 +29,39 @@ class TCPServer(Server, ABC):
 
         while self.running:
             client_socket, address = self.accept()
-            self.handle_client_method.value(client_socket)
+            self.handle_client_method.(client_socket)
 
 
 class UDPServer(Server, ABC):
 
-    def __init__(self, address, running=True):
+    def __init__(self, recv_size, address, running=True):
         super().__init__(socket.AF_INET, socket.SOCK_DGRAM)
+        self.recv_size = recv_size
         self.address = address
+        self.running = running
+        self.message_queue_lock = threading.Lock()
+        self.message_queue = []
 
-    def set_handle_client_method(self, method):
-        self.__handle_client_method = method
+    def get_message(self):
+        self.message_queue_lock.acquire()
+        msg = self.message_queue.pop(0)
+        self.message_queue_lock.release()
+        return msg
 
-    @property
-    def handle_client_method(self):
-        return self.__handle_client_method
+    def __insert_message_to_queue(self, data, address):
+        self.message_queue_lock.acquire()
+        self.message_queue.append((data, address))
+        self.message_queue_lock.release()
 
     def run(self):
         self.bind(self.address)
+        while self.running:
+            data, address = self.recvfrom(self.recv_size)
+            self.__insert_message_to_queue(data, address)
 
 
 def main():
-    tcp = TCPServer(('localhost', 15))
+    tcp = TCPServer(('localhost', None, 15))
     repr(tcp)
     print(type(tcp))
     tcp.bind(('localhost', 15))

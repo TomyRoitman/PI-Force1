@@ -16,12 +16,11 @@ def initialize_server(constants, server_name, new_thread=True):
     global THREADS
     server_info = constants[f"{server_name}"]
     if server_info["type"] == "tcp":
-        server = TCPServer((server_info["ip"], int(server_info["port"])))
+        server = TCPServer((server_info["ip"], server_info["recv_size"], handle_client, int(server_info["port"])))
     elif server_info["type"] == "udp":
-        server = UDPServer((server_info["ip"], int(server_info["port"])))
+        server = UDPServer((server_info["ip"], server_info["recv_size"], int(server_info["port"])))
     else:
         raise ValueError(f"Invalid server_type: {server_name}")
-    server.set_handle_client_method(handle_client)
 
     if new_thread:
         server_thread = threading.Thread(target=server.run)
