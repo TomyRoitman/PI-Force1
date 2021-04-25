@@ -21,7 +21,8 @@ class TCPServer(Server, ABC):
         self.listen_amount = listen_amount
         self.running = True
 
-
+    def get_run_method(self):
+            return self.run
 
     def run(self):
         self.bind(self.address)
@@ -29,12 +30,12 @@ class TCPServer(Server, ABC):
 
         while self.running:
             client_socket, address = self.accept()
-            self.handle_client_method.(client_socket)
+            self.handle_client_method(client_socket)
 
 
 class UDPServer(Server, ABC):
 
-    def __init__(self, recv_size, address, running=True):
+    def __init__(self, address, recv_size, running=True):
         super().__init__(socket.AF_INET, socket.SOCK_DGRAM)
         self.recv_size = recv_size
         self.address = address
@@ -43,21 +44,28 @@ class UDPServer(Server, ABC):
         self.message_queue = []
 
     def get_message(self):
+        if not self.message_queue:
+            return None
         self.message_queue_lock.acquire()
         msg = self.message_queue.pop(0)
         self.message_queue_lock.release()
+        # print("getting message")
         return msg
 
-    def __insert_message_to_queue(self, data, address):
+    def __insert_message_to_queue(self, data):
         self.message_queue_lock.acquire()
-        self.message_queue.append((data, address))
+        self.message_queue.append(data)
         self.message_queue_lock.release()
 
+    def get_run_method(self):
+        return self.run
+
     def run(self):
+        print("running")
         self.bind(self.address)
         while self.running:
             data, address = self.recvfrom(self.recv_size)
-            self.__insert_message_to_queue(data, address)
+            self.__insert_message_to_queue(data)
 
 
 def main():
