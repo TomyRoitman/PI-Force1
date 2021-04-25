@@ -53,10 +53,16 @@ class StreamReceiver:
         self.chunks = self.__initialize_chunks(self.__get_blank_image(self.frame_size))
         print(len(self.chunks), len(self.chunks[0]))
     def __initialize_chunks(self, blank_image):
-        # print(math.ceil(len(cv2.imencode(".JPEG", np.split(blank_image, self.split_size)[0])[1].tobytes()) / float(self.buffer_size))
-        # print(cv2.imencode(".JPEG", np.split(blank_image, self.split_size)[0])[1].tobytes())
-        print(len(cv2.imencode(".JPEG", np.split(blank_image, self.split_size)[0])[1].tobytes()))
-        return [{1: None} for chunk in np.split(blank_image, self.split_size)]
+        chunks = [cv2.imencode(".JPEG", chunk)[1].flatten().tobytes() for chunk in np.split(blank_image, self.split_size)]
+        compressed_chunks_in_dictionaries = []
+        for compressed_chunk in chunks:
+            dictionary = {}
+            for index in range(math.ceil(len(compressed_chunk) / self.buffer_size)):
+                dictionary[index] = compressed_chunk[index * self.buffer_size : index * self.buffer_size + self.buffer_size]
+            compressed_chunks_in_dictionaries.append(dictionary)
+        return compressed_chunks_in_dictionaries
+
+        return [{i: i for i in cv2.imencode(".JPEG", chunk)[1].flatten().tobytes()} for chunk in np.split(blank_image, self.split_size)]
 
     def __decompress_frame(self, encoded_frame):
         _, decoded_frame = cv2.imdecode(encoded_frame, 1)
