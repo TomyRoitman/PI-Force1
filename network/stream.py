@@ -1,102 +1,142 @@
 import threading
 import struct
+import itertools
 
 import cv2
 import numpy as np
 import socket
 import math
 
-import image_slicer
+HEADERS_SIZE = 12 # Bytes
+
+class StreamUtils:
+
+    @staticmethod
+    def split_frame_to_grid(frame, grid_size):
+        height, width = frame.shape[:2]
+        block_height, block_width = math.ceil(height / grid_size), math.ceil(width / grid_size)
+        chunks = [[] for i in range(grid_size)]
+        for y in range(0, grid_size):
+            for x in range(0, grid_size):
+                chunk = frame[y*block_height:y*block_height+block_height, x*block_width:x*block_width+block_width]                
+                if chunk.shape[1] == 0:
+                    break
+                chunks[y].append(StreamUtils.compress_frame(chunk))
+        return chunks
+
+    @staticmethod
+    def format_frame(grid, frame_data):
+
+        chunks = [cv2.imdecode(np.frombuffer(b"".join(self.__sort_chunk_pieces(chunk)), np.uint8), 1).flatten() for chunk in chunks]
+        height, width = frame_data.shape[:2]
+        block_height, block_width = int(math.ceil(height / grid_size)), int(math.ceil(width / grid_size))
+        for row_index in range(len(grid)):
+            row = grid[row_index]
+            for block_index in range(len(row)):
+                block = row[block_index]
+                sorted_block_chunks = sort_chunk_pieces(block)
+                block_data = np.frombuffer(b"".join(sorted_block_chunks), np.uint8)
+                decoded_block_data = cv2.imdecode(block_data, 1)
+
+                block_longitude = block_height * row_index
+                block_latitude = block_width * block_index
+                frame_data[block_longitude:block_longitude + block_height, block_latitude:block_latitude+block_width] = decoded_block_data
+        return frame_data 
+
+
+    @staticmethod
+    def compress_frame(frame):
+            _, encoded_frame = cv2.imencode('.JPEG', frame)
+            return encoded_frame
+
+    @staticmethod
+    def decompress_frame(encoded_frame):
+        decoded_frame = cv2.imdecode(encoded_frame, 1)
+        return decoded_frame
+
+
+    @staticmethod
+    def get_blank_image(frame_size):
+        return np.zeros(frame_size, np.uint8)
+
+
+    @staticmethod
+    def initialize_chunks(blank_image, buffer_size, grid_size):
+        grid = StreamUtils.split_frame_to_grid(blank_image, grid_size)
+        frame_dict = []
+        for row in grid:
+            for block in row:
+                print(block.shape)
+                block_chunks = np.split(block, block.shape[0] // buffer_size) #[block[i:i + buffer_size] for i in range(0, block.shape[0], buffer_size)]    
+                row.append({i: block_chunks[i] for i in range(len(block_chunks))})
+            frame_dict.append(row)
+        
+    @staticmethod
+    def sort_chunk_pieces(block):
+        """
+        Sort chunk pieces and filter out null ones.
+        """
+        items = list(block.items())
+        items.sort(key=lambda piece: piece[0])
+        values = list(map(lambda piece: piece[1], items))
+        return list(filter(lambda piece: piece != None, values))
+
+    
+
+
 class Streamer:
 
-    def __init__(self, udp_socekt: socket.socket, destination_address, split_size, buffer_size,
+    def __init__(self, udp_socekt: socket.socket, destination_address, grid_size, buffer_size,
                  times_to_send):
         self.udp_socket = udp_socekt
         self.destination_address = destination_address
-        self.split_size = split_size
-        self.buffer_size = buffer_size - 8  # 8 = size of packed indexes
+        self.grid_size = grid_size
+        self.buffer_size = buffer_size - HEADERS_SIZE
         self.times_to_send = times_to_send
-
-    def __compress_frame(self, frame):
-        _, encoded_frame = cv2.imencode('.JPEG', frame)
-        return encoded_frame
+    
 
     def send_image(self, frame):
-        compressed_frame_chunks = [self.__compress_frame(chunk).flatten().tobytes() for chunk in
-                                   np.split(frame.flatten(), self.split_size)]
+        grid = StreamUtils.split_frame_to_grid(frame)
 
-        print(len(compressed_frame_chunks), len(compressed_frame_chunks[0]))
+        for row_index in range(len(grid)):
+            packed_row_index = struct.pack('!i', compressed_chunk_index)
+            
+            for compressed_chunk_index in range(len(row)):
+                packed_compressed_chunk_index = struct.pack('!i', compressed_chunk_index)
+                
+                compressed_chunk = grid[row_index][compressed_chunk_index] 
+                message_chunks = [compressed_chunk[i:i + self.buffer_size] for i in range(0, len(compressed_chunk), self.buffer_size)]    
 
-        for compressed_chunk_index in range(len(compressed_frame_chunks)):
-            packed_compressed_chunk_index = struct.pack('!i', compressed_chunk_index)
-            message_chunks = [compressed_frame_chunks[compressed_chunk_index][i:i + self.buffer_size] for i in
-                              range(0, len(compressed_frame_chunks[compressed_chunk_index]), self.buffer_size)]
-            for message_chunk_index in range(len(message_chunks)):
-                for i in range(self.times_to_send):
+                for message_chunk_index in range(len(message_chunks)):
                     packed_message_chunk_index = struct.pack('!i', message_chunk_index)
-                    
-                    self.udp_socket.sendto(
-                        packed_compressed_chunk_index +
-                        packed_message_chunk_index +
-                        message_chunks[message_chunk_index],
-                        self.destination_address)
 
-        # for chunk in chunks:
+                    for i in range(self.times_to_send):
+                        self.udp_socket.sendto(packed_row_index + packed_compressed_chunk_index + packed_message_chunk_index + compressed_chunk, self.destination_address)
 
 
 class StreamReceiver:
 
-    def __init__(self, udp_socekt: socket.socket, frame_size, running, split_size, buffer_size):
+    def __init__(self, udp_socekt: socket.socket, frame_size, running, grid_size, buffer_size):
         self.udp_socket = udp_socekt
-        self.frame_size = frame_size
         self.running = running
-        self.split_size = split_size
-        self.buffer_size = buffer_size
-        self.frame_data = self.__get_blank_image(self.frame_size)
         self.lock = threading.Lock()
-        self.chunks = self.__initialize_chunks(self.__get_blank_image(self.frame_size))
-        print(len(self.chunks), len(self.chunks[0]))
 
-    def __initialize_chunks(self, blank_image):
-        chunks = [cv2.imencode(".JPEG", chunk)[1].flatten().tobytes() for chunk in np.split(blank_image, self.split_size)]
-        compressed_chunks_in_dictionaries = []
-        for compressed_chunk in chunks:
-            dictionary = {}
-            for index in range(math.ceil(len(compressed_chunk) / self.buffer_size)):
-                dictionary[index] = compressed_chunk[index * self.buffer_size : index * self.buffer_size + self.buffer_size]
-            compressed_chunks_in_dictionaries.append(dictionary)
-        return compressed_chunks_in_dictionaries
+        self.frame_size = frame_size
+        self.grid_size = grid_size
+        self.buffer_size = buffer_size
 
-        return [{i: i for i in cv2.imencode(".JPEG", chunk)[1].flatten().tobytes()} for chunk in np.split(blank_image, self.split_size)]
+        self.frame_data = StreamUtils.get_blank_image(self.frame_size)
+        self.grid = StreamUtils.initialize_chunks(StreamUtils.get_blank_image(self.frame_size), self.frame_data, self.grid_size)
+        print(len(self.grid), len(self.grid[0]))
 
-    def __decompress_frame(self, encoded_frame):
-        _, decoded_frame = cv2.imdecode(encoded_frame, 1)
-        return decoded_frame
-
-    def __get_blank_image(self, frame_size):
-        return np.zeros(frame_size, np.uint8)
-
-    def __sort_chunk_pieces(self, chunk_pieces):
-        items = list(chunk_pieces.items())
-        # print(items)
-        items.sort(key=lambda piece: piece[0])
-        # print("Sort result: ", list(map(lambda piece: piece[1], items)))
-        return list(filter(lambda piece: piece != None, map(lambda piece: piece[1], items)))
-
-    def __format_frame(self, chunks, frame_data):
-        if any(None in chunk.values() for chunk in chunks):
-            return self.frame_data
-        chunks = [cv2.imdecode(np.frombuffer(b"".join(self.__sort_chunk_pieces(chunk)), np.uint8), 1).flatten() for chunk in chunks]
-        jump_size = frame_data.flatten().shape[0] // self.split_size
-        for i in range(frame_data.shape[0] // jump_size):
-            frame_data[i * jump_size:i * jump_size + jump_size] = chunks[i]
-        return frame_data 
-
+    
     def get_frame(self):
-        if any(None in chunk.values() for chunk in self.chunks):
-            return self.frame_data
+
+        # if any(None in block.values() for block in itertools.chain([*grid])):
+        #     return self.frame_data
+
         self.lock.acquire()
-        self.frame_data = self.__format_frame(self.chunks, self.frame_data)
+        self.frame_data = StreamUtils.format_frame(self.grid, self.frame_data)
         frame = self.frame_data
         self.lock.release()
         return frame
@@ -105,13 +145,15 @@ class StreamReceiver:
         """
         This method is designated to receive a video stream from client on a separate thread.
         """
+        packed_row_index = b""
         packed_compressed_chunk_index = b""
         packed_message_chunk_index = b""
+        unpacked_row_index = 0
         unpacked_compressed_chunk_index = 0
         unpacked_message_chunk_index = 0
 
         self.lock.acquire()
-        frame = self.frame_data.flatten()
+        frame = self.frame_data
         self.lock.release()
 
         while self.running:
@@ -121,17 +163,18 @@ class StreamReceiver:
                 continue
 
             # print(f"Message: {message}")
-            packed_compressed_chunk_index = message[:4]
-            packed_message_chunk_index = message[4:8]
+            packed_row_index = message[:4]
+            packed_compressed_chunk_index = message[4:8]
+            packed_message_chunk_index = message[8:12]
 
-            unpacked_compressed_chunk_index = struct.unpack('!i', packed_compressed_chunk_index)[0]
-            unpacked_message_chunk_index = struct.unpack('!i', packed_message_chunk_index)[0]
+            row_index = struct.unpack('!i', packed_row_index)[0]
+            compressed_chunk_index = struct.unpack('!i', packed_compressed_chunk_index)[0]
+            message_chunk_index = struct.unpack('!i', packed_message_chunk_index)[0]
 
             # print(f"{unpacked_compressed_chunk_index} / {unpacked_message_chunk_index}")
-            data = message[8:]
+            data = message[HEADERS_SIZE:]
             self.lock.acquire()
-            self.chunks[unpacked_compressed_chunk_index][unpacked_message_chunk_index] = data
-            
+            self.grid[row_index][compressed_chunk_index][message_chunk_index] = data
             self.lock.release()
 
 
