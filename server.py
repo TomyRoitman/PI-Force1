@@ -53,7 +53,7 @@ def main():
 
 
 
-    stream_receiver = StreamReceiver(udp_server, (480, 640, 3), True, 60, 1024)
+    stream_receiver = StreamReceiver(udp_server, (480, 640, 3), True, 1, 1024)
     stream_receiver_thread = threading.Thread(target=stream_receiver.receive_stream, args=())
     THREADS.append(stream_receiver_thread)
     stream_receiver_thread.start()
@@ -62,7 +62,7 @@ def main():
         cv2.imshow("StreamReceiver", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-        time.sleep(1.0 / 25)
+        time.sleep(1.0 / 15)
     # When everything done, release the capture
     cv2.destroyAllWindows()
     stream_receiver.running = False
