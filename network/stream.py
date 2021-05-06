@@ -6,6 +6,7 @@ import numpy as np
 import socket
 import math
 
+import image_slicer
 class Streamer:
 
     def __init__(self, udp_socekt: socket.socket, destination_address, split_size, buffer_size,
@@ -33,9 +34,12 @@ class Streamer:
             for message_chunk_index in range(len(message_chunks)):
                 for i in range(self.times_to_send):
                     packed_message_chunk_index = struct.pack('!i', message_chunk_index)
+                    
                     self.udp_socket.sendto(
-                        packed_compressed_chunk_index + packed_message_chunk_index + message_chunks[
-                            message_chunk_index], self.destination_address)
+                        packed_compressed_chunk_index +
+                        packed_message_chunk_index +
+                        message_chunks[message_chunk_index],
+                        self.destination_address)
 
         # for chunk in chunks:
 
@@ -52,6 +56,7 @@ class StreamReceiver:
         self.lock = threading.Lock()
         self.chunks = self.__initialize_chunks(self.__get_blank_image(self.frame_size))
         print(len(self.chunks), len(self.chunks[0]))
+
     def __initialize_chunks(self, blank_image):
         chunks = [cv2.imencode(".JPEG", chunk)[1].flatten().tobytes() for chunk in np.split(blank_image, self.split_size)]
         compressed_chunks_in_dictionaries = []
@@ -156,5 +161,52 @@ def main():
             print("The images are completely Equal")
 
 
+def __compress_frame(frame):
+        _, encoded_frame = cv2.imencode('.JPEG', frame)
+        return encoded_frame
+
+
+def chunkify(img, block_width=4, block_height=4):
+    shape = img.shape
+    x_len = shape[0]//block_width
+    y_len = shape[1]//block_height
+
+    chunks = []
+    x_indices = [i for i in range(0, shape[0]+1, block_width)]
+    y_indices = [i for i in range(0, shape[1]+1, block_height)]
+
+    shapes = list(zip(x_indices, y_indices))
+    print(shapes)
+    for i in range(len(shapes)):
+        try:
+            start_x = shapes[i][0]
+            start_y = shapes[i][1]
+            end_x = shapes[i+1][0]
+            end_y = shapes[i+1][1]
+            chunks.append(shapes[start_x:end_x][start_y:end_y] )
+        except IndexError:
+            print('End of Array')
+
+    print(chunks)
+
+    return chunks
+
+        
+
+def main3():
+    pic_path = "D:\pic\pic.jpg"
+    frame = cv2.imread(pic_path)
+    frame = cv2.resize(frame, (480, 640))
+    cv2.imshow("original", frame)
+    print("Shape: ", frame.shape)
+    
+    chunkify(frame, math.ceil(frame.shape[0] / 5), math.ceil(frame.shape[1] / 5))
+
+    # compressed_frame_chunks = [__compress_frame(chunk).tobytes() for chunk in
+    #                                chunkify(frame, math.ceil(frame.shape[0] / 5), math.ceil(frame.shape[1] / 5))]
+
+    decompressed = np.concatenate([cv2.imdecode(np.frombuffer(chunk, np.uint8), 1) for chunk in compressed_frame_chunks])
+    cv2.imwrite("decompressed.jpg", decompressed)
+
 if __name__ == '__main__':
-    main()
+    main3()
