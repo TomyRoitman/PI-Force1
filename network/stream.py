@@ -46,8 +46,11 @@ class StreamUtils:
 
     @staticmethod
     def compress_frame(frame):
-            _, encoded_frame = cv2.imencode('.JPEG', frame)
-            return encoded_frame
+        print(frame.shape)
+        if frame.shape[0] == 0:
+            return None
+        _, encoded_frame = cv2.imencode('.JPEG', frame)
+        return encoded_frame.tobytes()
 
     @staticmethod
     def decompress_frame(encoded_frame):
@@ -68,7 +71,9 @@ class StreamUtils:
         for row in grid:
             new_row = []
             for block in row:
-                block_chunks = [block[i:i + buffer_size, :] for i in range(0, block.shape[0], buffer_size)]    
+                if block is None:
+                    continue
+                block_chunks = [block[i:i + buffer_size] for i in range(0, len(block), buffer_size)]    
                 new_row.append({i: block_chunks[i] for i in range(len(block_chunks))})
             frame_dict.append(new_row)
         return frame_dict
@@ -106,33 +111,20 @@ class Streamer:
 
                 for compressed_chunk_index in range(len(row)):
                     packed_compressed_chunk_index = struct.pack('!i', compressed_chunk_index)
-                    
+                   
                     compressed_chunk = grid[row_index][compressed_chunk_index] 
+                    if compressed_chunk is None:
+                        continue
                     message_chunks = [compressed_chunk[i:i + self.buffer_size] for i in range(0, len(compressed_chunk), self.buffer_size)]    
 
                     for message_chunk_index in range(len(message_chunks)):
                         packed_message_chunk_index = struct.pack('!i', message_chunk_index)
 
                         for i in range(self.times_to_send):
-                            self.udp_socket.sendto(packed_row_index + packed_compressed_chunk_index + packed_message_chunk_index + compressed_chunk.tobytes(), self.destination_address)
+                            self.udp_socket.sendto(packed_row_index + packed_compressed_chunk_index + packed_message_chunk_index + message_chunks[message_chunk_index], self.destination_address)
                 
         
-        # for row_index in range(len(grid[::-1])):
-        #     packed_row_index = struct.pack('!i', row_index)
-        #     row = grid[row_index][::-1]
-
-        #     for compressed_chunk_index in range(len(row)):
-        #         packed_compressed_chunk_index = struct.pack('!i', compressed_chunk_index)
-                
-        #         compressed_chunk = grid[row_index][compressed_chunk_index] 
-        #         message_chunks = [compressed_chunk[i:i + self.buffer_size] for i in range(0, len(compressed_chunk), self.buffer_size)][::-1]
-
-        #         for message_chunk_index in range(len(message_chunks)):
-        #             packed_message_chunk_index = struct.pack('!i', message_chunk_index)
-
-        #             for i in range(self.times_to_send):
-        #                 self.udp_socket.sendto(packed_row_index + packed_compressed_chunk_index + packed_message_chunk_index + compressed_chunk.tobytes(), self.destination_address)
-
+       
 
 class StreamReceiver:
 
