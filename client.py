@@ -4,7 +4,11 @@ import socket
 import time
 udp_client_sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
+<<<<<<< HEAD
 streamer = Streamer(udp_client_sock, ("127.0.0.1", 10003), 2, 2, 1024, 2)
+=======
+streamer = Streamer(udp_client_sock, ("127.0.0.1", 10002), 25, 1024, 2)
+>>>>>>> 1c7e733fee9c1f443291c8f965341d8f58ec4b54
 
 cap = cv2.VideoCapture(0)
 
