@@ -25,6 +25,7 @@ class TCPServer(Server, ABC):
             return self.run
 
     def run(self):
+        self.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.bind(self.address)
         self.listen(self.listen_amount)
 
@@ -54,6 +55,7 @@ class UDPServer(Server, ABC):
 
     def __insert_message_to_queue(self, data):
         self.message_queue_lock.acquire()
+        # print("Appending data: ", data)
         self.message_queue.append(data)
         self.message_queue_lock.release()
 
@@ -62,9 +64,11 @@ class UDPServer(Server, ABC):
 
     def run(self):
         print("running")
+        self.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.bind(self.address)
         while self.running:
             data, address = self.recvfrom(self.recv_size)
+            # print("Received data: ", data)
             self.__insert_message_to_queue(data)
 
 
