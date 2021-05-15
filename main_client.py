@@ -8,6 +8,7 @@ from network.server import TCPServer, UDPServer
 from network.stream import StreamReceiver
 
 CONSTANTS_PATH = "constants.json"
+DESTINATION_SIZE = (480, 640)
 STREAM_FRAME_SHAPE = (192, 256, 3)
 STREAM_FRAME_GRID_ROWS = 4
 STREAM_FRAME_GRID_COLUMNS = 4
@@ -39,7 +40,7 @@ def initialize_server(constants, server_name, new_thread=True):
     return server
 
 
-if __name__ == '__main__':
+def main():
     global THREADS
     constants = json.load(open(CONSTANTS_PATH))
 
@@ -54,12 +55,15 @@ if __name__ == '__main__':
     running = True
     while running:
         left_frame = left_stream_receiver.get_frame()
-        resized_left_frame = cv2.resize(left_frame)
+        resized_left_frame = cv2.resize(left_frame, DESTINATION_SIZE)
         cv2.imshow("Left Camera", resized_left_frame)
 
         right_frame = right_stream_receiver.get_frame()
-        resized_right_frame = cv2.resize(right_frame)
+        resized_right_frame = cv2.resize(right_frame, DESTINATION_SIZE)
         cv2.imshow("Right Camera", resized_right_frame)
 
         time.sleep(1.0 / 60)
 
+
+if __name__ == '__main__':
+    main()
