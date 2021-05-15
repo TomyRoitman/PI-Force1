@@ -53,8 +53,9 @@ def main():
 
 
 
-    # stream_receiver = StreamReceiver(udp_server, (192, 256, 3), True, 4, 4, 1024)
-    stream_receiver = StreamReceiver(udp_server, (240, 320, 3), True, 4, 4, 1024)
+    stream_receiver = StreamReceiver(udp_server, (192, 256, 3), True, 4, 4, 1024)
+    # stream_receiver = StreamReceiver(udp_server, (240, 320, 3), True, 4, 4, 1024)
+    # stream_receiver = StreamReceiver(udp_server, (480, 640, 3), True, 4, 4, 1024)
     stream_receiver_thread = threading.Thread(target=stream_receiver.receive_stream, args=())
     THREADS.append(stream_receiver_thread)
     stream_receiver_thread.start()

@@ -12,9 +12,13 @@ while(True):
     # Capture frame-by-frame
     ret, frame = cap.read()
 
+    if not ret:
+        continue
     # Our operations on the frame come here
-    # resized_frame = cv2.resize(frame, (256, 192))
-    resized_frame = cv2.resize(frame, (320, 240))
+    resized_frame = cv2.resize(frame, (256, 192))
+    # resized_frame = cv2.resize(frame, (320, 240))
+    # resized_frame = cv2.resize(frame, (640, 240))
+    # resized_frame = frame
     streamer.send_image(resized_frame)
     # Display the resulting frame
     cv2.imshow('Streamer', frame)
