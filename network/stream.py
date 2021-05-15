@@ -73,16 +73,8 @@ class StreamUtils:
 
     @staticmethod
     def compress_frame(frame):
-<<<<<<< HEAD
         ret, encoded_frame = cv2.imencode('.JPEG', frame)
         return encoded_frame if ret else None
-=======
-        print(frame.shape)
-        if frame.shape[0] == 0:
-            return None
-        _, encoded_frame = cv2.imencode('.JPEG', frame)
-        return encoded_frame.tobytes()
->>>>>>> 1c7e733fee9c1f443291c8f965341d8f58ec4b54
 
     @staticmethod
     def decompress_frame(encoded_frame):
@@ -105,28 +97,11 @@ class StreamUtils:
         return {i: StreamUtils.create_block(grid[i], buffer_size, b"\xFF") for i in range(len(grid))}
 
     @staticmethod
-<<<<<<< HEAD
     def create_block(block, buffer_size, content=b"\x00"):
         ret, encoded = cv2.imencode(".JPEG", block)
         encoded_bytes = encoded.tobytes()
         return [encoded_bytes[i:i + buffer_size] for i in range(0, len(encoded_bytes), buffer_size)] if ret else None
 
-=======
-    def initialize_chunks(blank_image, buffer_size, grid_size):
-        
-        grid = StreamUtils.split_frame_to_grid(blank_image, grid_size)
-        frame_dict = []
-        for row in grid:
-            new_row = []
-            for block in row:
-                if block is None:
-                    continue
-                block_chunks = [block[i:i + buffer_size] for i in range(0, len(block), buffer_size)]    
-                new_row.append({i: block_chunks[i] for i in range(len(block_chunks))})
-            frame_dict.append(new_row)
-        return frame_dict
-        
->>>>>>> 1c7e733fee9c1f443291c8f965341d8f58ec4b54
     @staticmethod
     def sort_grid_pieces(grid):
         """
@@ -150,7 +125,6 @@ class Streamer:
         self.times_to_send = times_to_send
 
     def send_image(self, frame):
-<<<<<<< HEAD
         if frame is None:
             return frame
         # grid = StreamUtils.split_frame_to_grid(frame, math.ceil(frame.shape[0] / float(self.grid_rows)),
@@ -193,30 +167,6 @@ class Streamer:
                     packed_block_index + packed_size + packed_chunk_index + message_chunks[chunk_index],
                     self.destination_address)
 
-=======
-        grid = StreamUtils.split_frame_to_grid(frame, self.grid_size)
-        for i in range(1):
-            for row_index in range(len(grid)):
-                packed_row_index = struct.pack('!i', row_index)
-                row = grid[row_index]
-
-                for compressed_chunk_index in range(len(row)):
-                    packed_compressed_chunk_index = struct.pack('!i', compressed_chunk_index)
-                   
-                    compressed_chunk = grid[row_index][compressed_chunk_index] 
-                    if compressed_chunk is None:
-                        continue
-                    message_chunks = [compressed_chunk[i:i + self.buffer_size] for i in range(0, len(compressed_chunk), self.buffer_size)]    
-
-                    for message_chunk_index in range(len(message_chunks)):
-                        packed_message_chunk_index = struct.pack('!i', message_chunk_index)
-
-                        for i in range(self.times_to_send):
-                            self.udp_socket.sendto(packed_row_index + packed_compressed_chunk_index + packed_message_chunk_index + message_chunks[message_chunk_index], self.destination_address)
-                
-        
-       
->>>>>>> 1c7e733fee9c1f443291c8f965341d8f58ec4b54
 
 class StreamReceiver:
 
