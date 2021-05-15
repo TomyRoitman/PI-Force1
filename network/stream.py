@@ -166,6 +166,9 @@ class Streamer:
                 self.udp_socket.sendto(
                     packed_block_index + packed_size + packed_chunk_index + message_chunks[chunk_index],
                     self.destination_address)
+                self.udp_socket.sendto(
+                    packed_block_index + packed_size + packed_chunk_index + message_chunks[chunk_index],
+                    self.destination_address)
 
 
 class StreamReceiver:
@@ -183,6 +186,7 @@ class StreamReceiver:
         self.block_width = math.ceil(frame_size[1] / float(grid_columns))
         self.frame_data = StreamUtils.get_blank_image(self.frame_size)
         self.grid = StreamUtils.initialize_chunks(self.frame_data, self.buffer_size, self.grid_rows, grid_columns)
+        self.old_grid = self.grid
         # print("\n\n\n--------------------------------\nGrid: " + str(len(self.grid)) + "\n", self.grid, "\n--------------------------------\n\n\n")
 
     def get_frame(self):
@@ -205,7 +209,6 @@ class StreamReceiver:
         block_index = 0
         size = 0
         index = 0
-
         while self.running:
             message = self.udp_socket.get_message()
 
@@ -213,28 +216,14 @@ class StreamReceiver:
                 continue
 
             block_index, received_size, index, data = self.__parse_message(message)
-            # block_index = received_block_index
+
             size = received_size
             self.lock.acquire()
-            # self.grid[block_index] = [b"\x00" * self.buffer_size for i in range(size)]
             if size != len(self.grid[block_index]):
                 self.grid[block_index] = self.__make_list_of_size(self.grid[block_index], size)
             self.grid[block_index][index] = data
             self.lock.release()
 
-            # while index < size:
-            #     message = self.udp_socket.get_message()
-            #
-            #     if not message:
-            #         continue
-            #
-            #     received_block_index, received_size, index, data = self.__parse_message(message)
-            #     if received_block_index != block_index:
-            #         break
-            #
-            #     self.lock.acquire()
-            #     self.grid[block_index][index] = data
-            #     self.lock.release()
 
     def __make_list_of_size(self, source, size):
         if size > len(source):
