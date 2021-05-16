@@ -4,9 +4,9 @@ import socket
 import time
 udp_client_sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
-streamer = Streamer(udp_client_sock, ("127.0.0.1", 10003), 4, 4, 1024, 2)
+streamer = Streamer(udp_client_sock, ("192.168.1.43", 10002), 4, 4, 1024, 2)
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(2)
 
 while(True):
     # Capture frame-by-frame

@@ -166,9 +166,9 @@ class Streamer:
                 self.udp_socket.sendto(
                     packed_block_index + packed_size + packed_chunk_index + message_chunks[chunk_index],
                     self.destination_address)
-                self.udp_socket.sendto(
-                    packed_block_index + packed_size + packed_chunk_index + message_chunks[chunk_index],
-                    self.destination_address)
+                # self.udp_socket.sendto(
+                #     packed_block_index + packed_size + packed_chunk_index + message_chunks[chunk_index],
+                #     self.destination_address)
 
 
 class StreamReceiver:
@@ -209,8 +209,12 @@ class StreamReceiver:
         block_index = 0
         size = 0
         index = 0
+        print("Receiving stream!")
         while self.running:
+            # print("Receiving in loop")
             message = self.udp_socket.get_message()
+            # if message:
+            #     print("message received: ", message)
 
             if not message:
                 continue

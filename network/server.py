@@ -63,9 +63,9 @@ class UDPServer(Server, ABC):
         return self.run
 
     def run(self):
-        print("running")
         self.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.bind(self.address)
+        print("Server running on address: ", self.address)
         while self.running:
             data, address = self.recvfrom(self.recv_size)
             # print("Received data: ", data)
