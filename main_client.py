@@ -1,63 +1,61 @@
 import json
 import threading
 import time
-
+from network.socket_utils import initialize_server
 import cv2
 
-from network.server import TCPServer, UDPServer
 from network.stream import StreamReceiver
 
 CONSTANTS_PATH = "constants.json"
 DESTINATION_SIZE = (640, 480)
+LOCK = threading.Lock()
 # STREAM_FRAME_SHAPE = (192, 256, 3)
 STREAM_FRAME_SHAPE = (120, 160, 3)
 STREAM_FRAME_GRID_ROWS = 4
 STREAM_FRAME_GRID_COLUMNS = 4
+RECEIVERS = {}
 THREADS = []
 
 
-def handle_client(socket):
-    while True:
-        pass
+def initialize_receivers(constants):
+    global RECEIVERS
+    left_camera_udp_server = initialize_server(constants, "udp_server_left_camera", THREADS)
+    left_stream_receiver = StreamReceiver(left_camera_udp_server, STREAM_FRAME_SHAPE, True, False,
+                                          STREAM_FRAME_GRID_ROWS, STREAM_FRAME_GRID_COLUMNS,
+                                          left_camera_udp_server.recv_size)
+    left_stream_receiver_thread = threading.Thread(target=left_stream_receiver.receive_stream, args=())
+    THREADS.append(left_stream_receiver_thread)
+    left_stream_receiver_thread.start()
+
+    right_camera_udp_server = initialize_server(constants, "udp_server_right_camera", THREADS)
+    right_stream_receiver = StreamReceiver(right_camera_udp_server, STREAM_FRAME_SHAPE, True, False,
+                                           STREAM_FRAME_GRID_ROWS, STREAM_FRAME_GRID_COLUMNS,
+                                           left_camera_udp_server.recv_size)
+    right_stream_receiver_thread = threading.Thread(target=right_stream_receiver.receive_stream, args=())
+    THREADS.append(right_stream_receiver_thread)
+    right_stream_receiver_thread.start()
+
+    LOCK.acquire()
+    RECEIVERS["left"] = left_stream_receiver
+    RECEIVERS["right"] = right_stream_receiver
+    LOCK.release()
 
 
-def initialize_server(constants, server_name, new_thread=True):
-    global THREADS
-    server_info = constants[server_name]
-    if server_info["type"] == "tcp":
-        server = TCPServer((server_info["ip"], int(server_info["port"])), server_info["recv_size"], handle_client)
-    elif server_info["type"] == "udp":
-        server = UDPServer((server_info["ip"], int(server_info["port"])), server_info["recv_size"])
-    else:
-        raise ValueError(f"Invalid server_type: {server_name}")
-
-    if new_thread:
-        server_thread = threading.Thread(target=server.run, args=())
-        THREADS.append(server_thread)
-        server_thread.start()
-    else:
-        server.run()
-
-    return server
 
 
 def main():
     global THREADS
     constants = json.load(open(CONSTANTS_PATH))
+    initialize_receivers(constants)
 
-    left_camera_udp_server = initialize_server(constants, "udp_server_left_camera")
-    left_stream_receiver = StreamReceiver(left_camera_udp_server, STREAM_FRAME_SHAPE, True, STREAM_FRAME_GRID_ROWS,
-                                          STREAM_FRAME_GRID_COLUMNS, left_camera_udp_server.recv_size)
-    left_stream_receiver_thread = threading.Thread(target=left_stream_receiver.receive_stream, args=())
-    THREADS.append(left_stream_receiver_thread)
-    left_stream_receiver_thread.start()
+    # streamer_choice = input("Please choose camera to display:\n[1] Left Camera\n[2] Right Camera\n[3] None\n")
+    # while not streamer_choice.isdigit() or not 1 <= int(streamer_choice) <= 3:
+    #     streamer_choice = input(
+    #         "Invalid input. Please choose one of the following:\n[1] Left Camera\n[2] Right Camera\n[3] None\n")
+    # streamer_choice = int(streamer_choice)
 
-    right_camera_udp_server = initialize_server(constants, "udp_server_right_camera")
-    right_stream_receiver = StreamReceiver(right_camera_udp_server, STREAM_FRAME_SHAPE, True, STREAM_FRAME_GRID_ROWS,
-                                           STREAM_FRAME_GRID_COLUMNS, left_camera_udp_server.recv_size)
-    right_stream_receiver_thread = threading.Thread(target=right_stream_receiver.receive_stream, args=())
-    THREADS.append(right_stream_receiver_thread)
-    right_stream_receiver_thread.start()
+    left_stream_receiver = RECEIVERS["left"]
+    right_stream_receiver = RECEIVERS["right"]
 
     running = True
     while running:

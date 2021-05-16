@@ -173,9 +173,10 @@ class Streamer:
 
 class StreamReceiver:
 
-    def __init__(self, udp_socekt: socket.socket, frame_size, running, grid_rows, grid_columns, buffer_size):
+    def __init__(self, udp_socekt: socket.socket, frame_size, running, listening, grid_rows, grid_columns, buffer_size):
         self.udp_socket = udp_socekt
         self.running = running
+        self.listening = listening
         self.lock = threading.Lock()
 
         self.frame_size = frame_size
@@ -210,7 +211,9 @@ class StreamReceiver:
         size = 0
         index = 0
         print("Receiving stream!")
-        while self.running:
+        while self.listening:
+            if not self.listening:
+                continue
             # print("Receiving in loop")
             message = self.udp_socket.get_message()
             # if message:
