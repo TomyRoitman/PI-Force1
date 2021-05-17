@@ -131,3 +131,5 @@ dmypy.json
 .pyre/
 try_stereo/
 .vscode/
+try.py
+.idea/

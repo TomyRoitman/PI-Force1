@@ -49,7 +49,7 @@ def main():
 
     # car = Car()
     # initialize_server(constants, "main_tcp_server")
-    udp_server = initialize_server(constants, "main_udp_server")
+    udp_server = initialize_server(constants, "udp_server_left_camera")
 
 
 
