@@ -3,7 +3,7 @@ import socket
 import threading
 import time
 
-# from car import Car
+from car import Car
 from network.communication import TCPStream
 from network.socket_utils import initialize_server
 import cv2
@@ -29,21 +29,6 @@ RUNNING = True
 # STREAM_FRAME_SHAPE = (192, 256, 3)
 STREAMERS = {}
 THREADS = []
-
-
-def handle_client(socket):
-    while True:
-        pass
-
-
-# def stream_video(streamer, camera):
-#     running = True
-#     while running:
-#         ret, frame = camera.read()
-#         if ret:
-#             resized_frame = image_resize(frame, DESTINATION_SIZE[1], DESTINATION_SIZE[0])
-#             streamer.send_image(resized_frame)
-#         time.sleep(1.0 / 24)
 
 
 def initialize_streamer(camera):
@@ -74,9 +59,7 @@ def stream_video():
     streamer = None
     # print("Streaming video!")
     while RUNNING:
-        # print("In streaming video loop!")
-        # if CAMERA_CHOSEN:
-        #     print(CAMERA_CHOSEN)
+
         if CAMERA_CHOSEN != old_camera_chosen:
             stream_utils = initialize_streamer(CAMERA_CHOSEN)
             if not stream_utils:
@@ -107,19 +90,8 @@ def main():
     tcp_server = initialize_server(constants, "main_tcp_server", THREADS)
     client_socket = tcp_server.get_client()
     client_tcp_stream = TCPStream(client_socket, 1024, 4, 8, 1024)
-    # content_length, content = client_tcp_stream.recv_by_size()
-    # code, message = PICommunication.parse_message(content)
-    # while code != PICommunication.MessageCode.CHOOSE_CAMERA:
-    #     client_tcp_stream.send_by_size(PICommunication.error("expected CHOOSE_CAMERA message"))
-    #     content_length, content = client_tcp_stream.recv_by_size()
-    #     code, message = PICommunication.parse_message(content)
 
-    # LOCK.acquire()
-    # CAMERA_CHOSEN = message
-    # LOCK.release()
-
-    # car = Car()
-    car = None
+    car = Car()
     while RUNNING:
         content_length, content = client_tcp_stream.recv_by_size()
         code, message = PICommunication.parse_message(content)
