@@ -1,12 +1,14 @@
+import socket
 import threading
 
-from server import TCPServer, UDPServer
+from network.communication import TCPServer, UDPServer
 
 
 def initialize_server(constants, server_name, THREADS, new_thread=True):
     server_info = constants[server_name]
+    print(f"[Log] - Started server - {server_info}")
     if server_info["type"] == "tcp":
-        server = TCPServer((server_info["ip"], int(server_info["port"])), server_info["recv_size"], handle_client)
+        server = TCPServer((server_info["ip"], int(server_info["port"])), server_info["recv_size"])
     elif server_info["type"] == "udp":
         server = UDPServer((server_info["ip"], int(server_info["port"])), server_info["recv_size"])
     else:
@@ -20,3 +22,5 @@ def initialize_server(constants, server_name, THREADS, new_thread=True):
         server.run()
 
     return server
+
+

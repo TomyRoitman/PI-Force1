@@ -106,7 +106,7 @@ def main():
     while True:
         query = input("""
         \nf - forward
-        \nb - backward
+        \nb - backwards
         \ns - stop
         \nl - low
         \nm - medium
