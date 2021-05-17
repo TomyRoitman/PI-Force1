@@ -169,6 +169,9 @@ class Streamer:
                 self.udp_socket.sendto(
                     packed_block_index + packed_size + packed_chunk_index + message_chunks[chunk_index],
                     self.destination_address)
+                self.udp_socket.sendto(
+                    packed_block_index + packed_size + packed_chunk_index + message_chunks[chunk_index],
+                    self.destination_address)
 
 
 class StreamReceiver:
