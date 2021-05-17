@@ -32,7 +32,7 @@ CONSTANTS_PATH = "constants.json"
 DESTINATION_SIZE = (640, 480)
 FPS = 24
 LOCK = threading.Lock()
-MAIN_TCP_SERVER_ADDRESS = ("0.0.0.0", 10001)
+MAIN_TCP_SERVER_ADDRESS = ("192.168.1.47", 10001)
 MAIN_MENU_TEXT = """
 [1] Control car movement\n
 [2] Choose stream source\n
@@ -168,11 +168,11 @@ def main():
     show_stream_thread.start()
 
     server_socket = socket.socket()
-    server_tcp_stream = TCPStream(server_socket, 1024, 4, 8, 1024)
     try:
         server_socket.connect(MAIN_TCP_SERVER_ADDRESS)
     except socket.error as e:
         raise socket.error("Could not connect to server. Failed with error:\n" + str(e))
+    server_tcp_stream = TCPStream(server_socket, 1024, 4, 8, 1024)
 
     # camera_choice = input("Please choose a camera to be displayed:\n" + CAMERA_MENU_TEXT)
     # while not camera_choice.isdigit() or not 1 <= int(camera_choice) <= 3:
