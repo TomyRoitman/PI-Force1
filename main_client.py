@@ -145,11 +145,15 @@ def handle_car_movement_control_menu(server_tcp_stream: TCPStream):
 
 
 def handle_stream_source_menu(server_tcp_stream: TCPStream):
+    global CAMERA_CHOSEN
     command = input("Please choose a stream mode from below:\n" + CAMERA_MENU_TEXT)
     while RUNNING:
         if command in ("1", "2", "3"):
             # Left, Right or None
             server_tcp_stream.send_by_size(PICommunication.choose_camera(StreamOptions(int(command)).name))
+            LOCK.acquire()
+            CAMERA_CHOSEN = StreamOptions(int(command)).name
+            LOCK.release()
             break
         elif command == "4":
             # Back to main menu

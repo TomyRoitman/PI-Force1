@@ -1,7 +1,7 @@
 import json
 import threading
 
-from network.server import TCPServer, UDPServer
+from network.communication import TCPServer, UDPServer
 from network.stream import StreamReceiver
 
 import time
@@ -49,7 +49,7 @@ def main():
 
     # car = Car()
     # initialize_server(constants, "main_tcp_server")
-    udp_server = initialize_server(constants, "udp_server_left_camera")
+    udp_server = initialize_server(constants, "udp_server_right_camera")
 
 
 
