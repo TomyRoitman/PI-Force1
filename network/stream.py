@@ -1,9 +1,8 @@
-import logging
 from os.path import join
 import threading
 import struct
 import itertools
-from network.communication import UDPServer
+
 import cv2
 import numpy as np
 import socket
@@ -16,7 +15,7 @@ class StreamUtils:
 
     @staticmethod
     def split_frame_to_grid(frame, block_rows, block_cols):
-        # print("Split params: ", block_rows, block_cols)
+        print("Split params: ", block_rows, block_cols)
         # height, width = frame.shape[:2]
         # block_height, block_width = math.ceil(height / grid_size), math.ceil(width / grid_size)
         # chunks = [[] for i in range(grid_size)]
@@ -34,7 +33,6 @@ class StreamUtils:
         #         .swapaxes(1, 2)
         #         .reshape(-1, block_rows, block_cols, 3))
         return frame.reshape(block_rows * block_cols, h // block_rows, w // block_cols, 3)
-
     @staticmethod
     def format_frame(grid, frame_data, grid_rows, grid_columns, block_height, block_width):
         # chunks = [cv2.imdecode(np.frombuffer(b"".join(self.__sort_chunk_pieces(chunk)), np.uint8), 1).flatten() for chunk in chunks]
@@ -125,14 +123,32 @@ class Streamer:
         self.grid_columns = grid_columns
         self.buffer_size = buffer_size - HEADERS_SIZE
         self.times_to_send = times_to_send
-        print(f"[Log] - Initialized streamer with destination address: {self.destination_address}")
 
     def send_image(self, frame):
         if frame is None:
-            return
+            return frame
+        # grid = StreamUtils.split_frame_to_grid(frame, math.ceil(frame.shape[0] / float(self.grid_rows)),
+        #                                        math.ceil(frame.shape[1] / float(self.grid_columns)))
         grid = StreamUtils.split_frame_to_grid(frame, self.grid_rows,
                                                self.grid_columns)
 
+        # for i in range(1):
+        #     for row_index in range(len(grid)):
+        #         packed_row_index = struct.pack('!i', row_index)
+        #         row = grid[row_index]
+
+        #         for compressed_chunk_index in range(len(row)):
+        #             packed_compressed_chunk_index = struct.pack('!i', compressed_chunk_index)
+
+        #             compressed_chunk = grid[row_index][compressed_chunk_index] 
+        #             message_chunks = [compressed_chunk[i:i + self.buffer_size] for i in range(0, len(compressed_chunk), self.buffer_size)]    
+
+        #             for message_chunk_index in range(len(message_chunks)):
+        #                 packed_message_chunk_index = struct.pack('!i', message_chunk_index)
+
+        #                 for i in range(self.times_to_send):
+        #                     self.udp_socket.sendto(packed_row_index + packed_compressed_chunk_index + packed_message_chunk_index + compressed_chunk.tobytes(), self.destination_address)
+        print("Shape: ", grid.shape)
         for block_index in range(grid.shape[0]):
             packed_block_index = struct.pack('!i', block_index)
             block = grid[block_index]
@@ -154,18 +170,12 @@ class Streamer:
                     packed_block_index + packed_size + packed_chunk_index + message_chunks[chunk_index],
                     self.destination_address)
 
-                # print(f"[Log] - sent -> ({self.destination_address}): {packed_block_index + packed_size+ packed_chunk_index + message_chunks[chunk_index]}")
-                # self.udp_socket.sendto(
-                #     packed_block_index + packed_size + packed_chunk_index + message_chunks[chunk_index],
-                #     self.destination_address)
-
 
 class StreamReceiver:
 
-    def __init__(self, udp_socekt: UDPServer, frame_size, running, grid_rows, grid_columns, buffer_size):
+    def __init__(self, udp_socekt: socket.socket, frame_size, running, grid_rows, grid_columns, buffer_size):
         self.udp_socket = udp_socekt
         self.running = running
-        # self.listening = listening
         self.lock = threading.Lock()
 
         self.frame_size = frame_size
@@ -184,11 +194,11 @@ class StreamReceiver:
         # if any(None in block.values() for block in itertools.chain([*grid])):
         #     return self.frame_data
 
-        frame = StreamUtils.format_frame(self.grid, self.frame_data, self.grid_rows, self.grid_columns,
-                                         self.block_height, self.block_width)
-        # self.lock.acquire()
-        self.frame_data = frame
-        # self.lock.release()
+        self.lock.acquire()
+        self.frame_data = StreamUtils.format_frame(self.grid, self.frame_data, self.grid_rows, self.grid_columns,
+                                                   self.block_height, self.block_width)
+        frame = self.frame_data
+        self.lock.release()
         return frame
 
     def receive_stream(self):
@@ -199,17 +209,8 @@ class StreamReceiver:
         block_index = 0
         size = 0
         index = 0
-
-        print(f"[Log] - Initialized stream receiver")
-
         while self.running:
-            # if not self.listening:
-            #     continue
-            # print("Receiving in loop")
             message = self.udp_socket.get_message()
-            # print("[Log] - Received message: ", message)
-            # if message:
-            #     print("message received: ", message)
 
             if not message:
                 continue
@@ -217,15 +218,16 @@ class StreamReceiver:
             block_index, received_size, index, data = self.__parse_message(message)
 
             size = received_size
-            # self.lock.acquire()
+            self.lock.acquire()
             if size != len(self.grid[block_index]):
                 self.grid[block_index] = self.__make_list_of_size(self.grid[block_index], size)
             self.grid[block_index][index] = data
-            # self.lock.release()
+            self.lock.release()
+
 
     def __make_list_of_size(self, source, size):
         if size > len(source):
-            return source + [source[0], ] * (size - len(source))
+            return source + [source[0],] * (size - len(source))
         elif size < len(source):
             return source[:size]
         else:
