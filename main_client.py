@@ -4,14 +4,19 @@ import threading
 import time
 from enum import Enum
 
+import psutil
+from PIL import Image
+
 from image_processing.image_utils import image_resize
 from network.communication import TCPStream
 from network.protocol import PICommunication
 from network.socket_utils import initialize_server
 import cv2
-
+import matplotlib.pyplot as plt
 from network.stream import StreamReceiver
-
+import tk
+# from stream import Stream
+import stream
 CAMERA_CHOSEN = None
 CAMERA_MENU_TEXT = """
 [1] Left Camera\n
@@ -32,7 +37,7 @@ CONSTANTS_PATH = "constants.json"
 DESTINATION_SIZE = (640, 480)
 FPS = 24
 LOCK = threading.Lock()
-MAIN_TCP_SERVER_ADDRESS = ("192.168.1.47", 10001)
+MAIN_TCP_SERVER_ADDRESS = ("192.168.31.224", 10001)
 MAIN_MENU_TEXT = """
 [1] Control car movement\n
 [2] Choose stream source\n
@@ -69,9 +74,14 @@ def initialize_receiver(constants, receiver):
 def show_stream(constants):
     old_camera_chosen = None
     stream_receiver = None
-    i = 0
-    # start_time = time.time()
+    # i = 0
+    stream.initialize()
+    window = stream.Stream()
+
     while RUNNING:
+        for proc in psutil.process_iter():
+            if proc.name().startswith("99"):
+                proc.kill()
         # i += 1
         # if (time.time() - start_time) != 0 and CAMERA_CHOSEN:
         # print(f"[Log] - FPS: {i / float(time.time() - start_time)}")
@@ -89,7 +99,8 @@ def show_stream(constants):
         if frame is not None:
             # resized_frame = image_resize(frame, DESTINATION_SIZE[0], DESTINATION_SIZE[1])
             resized_frame = cv2.resize(frame, DESTINATION_SIZE)
-            cv2.imshow(f"Stream from camera", resized_frame)
+            img = Image.fromarray(resized_frame, 'RGB')
+            window.show_stream(img, img.shape[1], img.shpae[0])
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
         # time.sleep(1.0 / FPS)
@@ -145,10 +156,14 @@ def handle_car_movement_control_menu(server_tcp_stream: TCPStream):
 
 
 def handle_stream_source_menu(server_tcp_stream: TCPStream):
+    global CAMERA_CHOSEN
     command = input("Please choose a stream mode from below:\n" + CAMERA_MENU_TEXT)
     while RUNNING:
         if command in ("1", "2", "3"):
             # Left, Right or None
+            LOCK.acquire()
+            CAMERA_CHOSEN = StreamOptions(int(command)).name
+            LOCK.release()
             server_tcp_stream.send_by_size(PICommunication.choose_camera(StreamOptions(int(command)).name))
             break
         elif command == "4":

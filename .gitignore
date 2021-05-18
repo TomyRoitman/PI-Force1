@@ -130,5 +130,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 try_stereo/
+.vscode/
 try.py
 .idea/
