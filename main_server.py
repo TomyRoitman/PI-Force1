@@ -3,13 +3,15 @@ import socket
 import threading
 import time
 
-from car import Car
-from network.communication import TCPStream
-from network.socket_utils import initialize_server
 import cv2
+
+from car import Car
 from image_processing.image_utils import image_resize
+from image_processing.object_detection import ObjectDetector
+from network.communication import TCPStream
 # from network.communication import TCPServer
 from network.protocol import PICommunication
+from network.socket_utils import initialize_server
 from network.stream import Streamer
 
 CAMERA_CHOSEN = None
@@ -53,7 +55,7 @@ def initialize_streamer(camera):
     return streamer, camera
 
 
-def stream_video():
+def stream_video(detector: ObjectDetector):
     camera = None
     old_camera_chosen = None
     streamer = None
@@ -71,6 +73,8 @@ def stream_video():
         if streamer and camera:
             ret, frame = camera.read()
             if ret:
+                results = detector.detect(frame)
+                print(results)
                 resized_frame = image_resize(frame, DESTINATION_SIZE[1], DESTINATION_SIZE[0])
                 streamer.send_image(resized_frame)
         time.sleep(1.0 / FPS)
