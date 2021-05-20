@@ -77,6 +77,8 @@ def show_stream(constants):
         # print(f"[Log] - FPS: {i / float(time.time() - start_time)}")
         # print("[Log] showing stream")
         if CAMERA_CHOSEN != old_camera_chosen:
+            if stream_receiver:
+                stream_receiver.running = False
             stream_receiver = initialize_receiver(constants, CAMERA_CHOSEN)
             old_camera_chosen = CAMERA_CHOSEN
 
