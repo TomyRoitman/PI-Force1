@@ -16,6 +16,7 @@ from network.stream import Streamer
 
 CAMERA_CHOSEN = None
 CAMERAS = {}
+CONFIDENCE = 0.75
 CONSTANTS_PATH = "constants.json"
 # DESTINATION_SIZE = (160, 120)
 DESTINATION_SIZE = (256, 192)
@@ -86,7 +87,8 @@ def main():
     global CAMERA_CHOSEN
     global RUNNING
     global THREADS
-    stream_video_thread = threading.Thread(target=stream_video, args=())
+    detector = ObjectDetector("image_processing/", CONFIDENCE)
+    stream_video_thread = threading.Thread(target=stream_video, args=(detector,))
     THREADS.append(stream_video_thread)
     stream_video_thread.start()
 

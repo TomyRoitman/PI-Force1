@@ -16,9 +16,9 @@ class ObjectDetector:
                "sofa", "train", "tvmonitor"]
     COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
 
-    def __init__(self, confidence):
-        self.prototxt = "MobileNetSSD_deploy.prototxt.txt"
-        self.model = "MobileNetSSD_deploy.caffemodel"
+    def __init__(self, data_path, confidence):
+        self.prototxt = data_path + "/" + "MobileNetSSD_deploy.prototxt.txt"
+        self.model = data_path + "/" + "MobileNetSSD_deploy.caffemodel"
         self.model = self.load_model()
         self.confidence = confidence
 
