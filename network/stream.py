@@ -1,12 +1,10 @@
-from os.path import join
-import threading
+import socket
 import struct
-import itertools
+import threading
 
 import cv2
-import numpy as np
-import socket
 import math
+import numpy as np
 
 HEADERS_SIZE = 12  # Bytes
 

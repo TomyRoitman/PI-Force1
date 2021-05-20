@@ -128,15 +128,9 @@ def handle_car_movement_control_menu(server_tcp_stream: TCPStream):
         elif command == "h":
             message = PICommunication.set_high_speed()
         elif command == "tr":
-            # duration = input("Insert movement duration in seconds:\n")
-            # while not isfloat(duration):
-            #     duration = input("Could not convert time to float. Please insert again:\n")
             duration = 0
             message = PICommunication.turn_right(float(duration))
         elif command == "tl":
-            # duration = input("Insert movement length in seconds:\n")
-            # while not isfloat(duration):
-            #     duration = input("Could not convert time to float. Please insert again:\n")
             duration = 0
             message = PICommunication.turn_left(float(duration))
         elif command == "q":
