@@ -4,7 +4,7 @@ import threading
 import time
 from multiprocessing import Process
 import cv2
-
+from subprocess import Popen
 from car import Car
 from image_processing.image_utils import image_resize
 from image_processing.object_detection import ObjectDetector
@@ -14,8 +14,10 @@ from network.protocol import PICommunication
 from network.socket_utils import initialize_server
 from network.streamer import Streamer
 
-CAMERA_CHOSEN = None
+CAMERA_OPENED = {'left': False, 'right': False}
 CAMERAS = {}
+CAMERA_USED = {"left": False, "right": False}
+CAMERA_INDEX = {"left": 0, "right": 2}
 CONFIDENCE = 0.75
 CONSTANTS_PATH = "constants.json"
 # DESTINATION_SIZE = (160, 120)
@@ -23,11 +25,12 @@ DESTINATION_SIZE = (256, 192)
 # DESTINATION_SIZE = (256, 192)
 FPS = 24
 GPIO_PIN_DISTRIBUTION_PATH = "gpio_pin_distribution.json"
-LEFT_CAMERA_ADDRESS = ("192.168.1.43", 10002)
+LEFT_CAMERA_ADDRESS = "192.168.1.43:5000"
 LEFT_CAMERA_INDEX = 0
 LOCK = threading.Lock()
 PROCESSES = []
-RIGHT_CAMERA_ADDRESS = ("192.168.1.43", 10003)
+RIGHT_CAMERA_ADDRESS = "192.168.1.43:5001"
+CAMERA_ADDRESS = {"left": LEFT_CAMERA_ADDRESS, "right":RIGHT_CAMERA_ADDRESS}
 RIGHT_CAMERA_INDEX = 2
 RUNNING = True
 # STREAM_FRAME_SHAPE = (192, 256, 3)
@@ -55,17 +58,17 @@ def main():
     global RUNNING
     global PROCESSES
     global THREADS
-    detector = ObjectDetector("image_processing/", CONFIDENCE)
+    #detector = ObjectDetector("image_processing/", CONFIDENCE)
 
-    stream_video_process1 = Process(target=stream_video, args=('192.168.1.43', 5000, 0, detector))
+    #stream_video_process1 = Process(target=stream_video, args=('192.168.1.43', 5000, 0, detector))
     # THREADS.append(stream_video_thread1)
-    PROCESSES.append(stream_video_process1)
-    stream_video_process1.start()
+    #PROCESSES.append(stream_video_process1)
+   # stream_video_process1.start()
 
-    stream_video_process2 = Process(target=stream_video, args=('192.168.1.43', 5001, 2, detector))
-    PROCESSES.append(stream_video_process2)
+  #  stream_video_process2 = Process(target=stream_video, args=('192.168.1.43', 5001, 2, detector))
+ #   PROCESSES.append(stream_video_process2)
     # THREADS.append(stream_video_thread2)
-    stream_video_process2.start()
+#    stream_video_process2.start()
 
     constants = json.load(open(CONSTANTS_PATH))
     tcp_server = initialize_server(constants, "main_tcp_server", THREADS)
@@ -98,9 +101,18 @@ def main():
 
             # Video stream control:
             elif code == PICommunication.MessageCode.CHOOSE_CAMERA:
-                LOCK.acquire()
-                CAMERA_CHOSEN = message
-                LOCK.release()
+                camera = message
+                if not CAMERA_USED[camera]:
+                    print("Initializing stream for camera: ", camera)
+                    id = CAMERA_INDEX[camera]
+                    address = CAMERA_ADDRESS[camera]
+                    print(id, address)
+                    l = ['python3', 'network/streamer.py', '-a', address, '-i', str(id)]
+                    print(l)
+                    Popen(l)
+                    LOCK.acquire()
+                    CAMERA_OPENED[camera] = True
+                    LOCK.release()
 
             # General messages:
             elif code == PICommunication.MessageCode.DISCONNECT:

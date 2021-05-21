@@ -13,7 +13,8 @@ class Streamer:
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
+        print(self.host, type(self.host), self.port, type(self.port))
+        
     def send_frame(self, frame):
 
         # compress frame
@@ -50,11 +51,25 @@ class Streamer:
                 # send the frames accordingly
                 self.sock.sendto(data, (self.host, self.port))
 
-
+import argparse
 def main():
-    streamer = Streamer('192.168.1.43', 5000)
 
-    cap = cv2.VideoCapture(0)
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('-a', '--address', dest='address',
+                    help='<host>:<port> representing the destination address for the streamer')
+    parser.add_argument('-i', '--video-device-id', dest='video_device_id',
+                    help='Index of video device')
+
+    args = parser.parse_args()
+    print(args)
+
+    address = args.address
+    host, port = address.split(":")
+    port = int(port)
+    streamer = Streamer(host, port)
+    id = int(args.video_device_id)
+    cap = cv2.VideoCapture(id)
+    print("Entering loop", host, port, args.video_device_id)
     while True:
         ret, frame = cap.read()
 
