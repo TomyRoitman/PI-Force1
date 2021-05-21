@@ -12,7 +12,7 @@ from network.communication import TCPStream
 # from network.communication import TCPServer
 from network.protocol import PICommunication
 from network.socket_utils import initialize_server
-from network.stream import Streamer
+from network.streamer import Streamer
 
 CAMERA_CHOSEN = None
 CAMERAS = {}
@@ -34,50 +34,16 @@ STREAMERS = {}
 THREADS = []
 
 
-def initialize_streamer(camera):
-    global CAMERAS
-    global STREAMERS
-
-    address = ()
-    video_capture_device_index = -1
-    if camera == "left":
-        address = LEFT_CAMERA_ADDRESS
-        video_capture_device_index = LEFT_CAMERA_INDEX
-    elif camera == "right":
-        address = RIGHT_CAMERA_ADDRESS
-        video_capture_device_index = RIGHT_CAMERA_INDEX
-    else:
-        return None
-
-    udp_client_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-    streamer = Streamer(udp_client_socket, address, 4, 4, 1024, 2)
-    camera = cv2.VideoCapture(video_capture_device_index)
-
-    return streamer, camera
-
-
-def stream_video(detector: ObjectDetector):
-    camera = None
-    old_camera_chosen = None
-    streamer = None
-    # print("Streaming video!")
+def stream_video(host: str, port: int, camera_index: int, detector: ObjectDetector):
+    streamer = Streamer(host, port)
+    camera = cv2.VideoCapture(camera_index)
     while RUNNING:
 
-        if CAMERA_CHOSEN != old_camera_chosen:
-            stream_utils = initialize_streamer(CAMERA_CHOSEN)
-            if not stream_utils:
-                continue
-            streamer, camera = stream_utils
-            old_camera_chosen = CAMERA_CHOSEN
-
-        # Show frames:
-        if streamer and camera:
-            ret, frame = camera.read()
-            if ret:
-                results = detector.detect(frame)
-                print(results)
-                resized_frame = image_resize(frame, DESTINATION_SIZE[1], DESTINATION_SIZE[0])
-                streamer.send_image(resized_frame)
+        ret, frame = camera.read()
+        if ret:
+            results = detector.detect(frame)
+            print(results)
+            streamer.send_frame(frame)
         time.sleep(1.0 / FPS)
 
     cv2.destroyAllWindows()
@@ -88,9 +54,14 @@ def main():
     global RUNNING
     global THREADS
     detector = ObjectDetector("image_processing/", CONFIDENCE)
-    stream_video_thread = threading.Thread(target=stream_video, args=(detector,))
-    THREADS.append(stream_video_thread)
-    stream_video_thread.start()
+
+    stream_video_thread1 = threading.Thread(target=stream_video, args=('192.168.1.43', 5000, 0, detector))
+    THREADS.append(stream_video_thread1)
+    stream_video_thread1.start()
+
+    stream_video_thread2 = threading.Thread(target=stream_video, args=('192.168.1.43', 5001, 2, detector))
+    THREADS.append(stream_video_thread2)
+    stream_video_thread2.start()
 
     constants = json.load(open(CONSTANTS_PATH))
     tcp_server = initialize_server(constants, "main_tcp_server", THREADS)

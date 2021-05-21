@@ -1,16 +1,13 @@
 import json
 import socket
 import threading
-import time
 from enum import Enum
 
-from image_processing.image_utils import image_resize
+import cv2
+from network.stream_receiver import StreamReceiver
+
 from network.communication import TCPStream
 from network.protocol import PICommunication
-from network.socket_utils import initialize_server
-import cv2
-
-from network.stream import StreamReceiver
 
 CAMERA_CHOSEN = None
 CAMERA_MENU_TEXT = """
@@ -46,55 +43,35 @@ RUNNING = True
 THREADS = []
 
 
-def initialize_receiver(constants, receiver):
-    server_name = ""
-    if receiver == "left":
-        server_name = "udp_server_left_camera"
-    elif receiver == "right":
-        server_name = "udp_server_right_camera"
-    else:
-        return None
-    print(f"[Log] - initializing camera_udp_server for camera: {server_name}")
-    camera_udp_server = initialize_server(constants, server_name, THREADS)
-    print(f"[Log] Created camera_udp_server: {camera_udp_server}")
-    stream_receiver = StreamReceiver(camera_udp_server, STREAM_FRAME_SHAPE, True, STREAM_FRAME_GRID_ROWS,
-                                     STREAM_FRAME_GRID_COLUMNS, camera_udp_server.recv_size)
-    stream_receiver_thread = threading.Thread(target=stream_receiver.receive_stream)
-    THREADS.append(stream_receiver_thread)
-    stream_receiver_thread.start()
+def initialize_receivers(constants):
+    receiver1 = StreamReceiver('0.0.0.0', 5000)
+    t1 = threading.Thread(target=receiver1.receive_stream)
+    THREADS.append(t1)
+    t1.start()
 
-    return stream_receiver
+    receiver2 = StreamReceiver('0.0.0.0', 5001)
+    t2 = threading.Thread(target=receiver2.receive_stream)
+    THREADS.append(t2)
+    t2.start()
+
+    return receiver1, receiver2
 
 
 def show_stream(constants):
-    old_camera_chosen = None
-    stream_receiver = None
-    i = 0
-    # start_time = time.time()
-    while RUNNING:
-        # i += 1
-        # if (time.time() - start_time) != 0 and CAMERA_CHOSEN:
-        # print(f"[Log] - FPS: {i / float(time.time() - start_time)}")
-        # print("[Log] showing stream")
-        if CAMERA_CHOSEN != old_camera_chosen:
-            if stream_receiver:
-                stream_receiver.running = False
-            stream_receiver = initialize_receiver(constants, CAMERA_CHOSEN)
-            old_camera_chosen = CAMERA_CHOSEN
+    receiver1, receiver2 = initialize_receivers(constants)
 
-        # Show frames:
-        if not stream_receiver:
-            continue
-        # print(f"[Log] - Initialized stream receiver")
-        frame = stream_receiver.get_frame()
-        # print(f"[Log] got frame of shape: {frame.shape}")
-        if frame is not None:
-            # resized_frame = image_resize(frame, DESTINATION_SIZE[0], DESTINATION_SIZE[1])
-            resized_frame = cv2.resize(frame, DESTINATION_SIZE)
-            cv2.imshow(f"Stream from camera", resized_frame)
+    while RUNNING:
+
+        if receiver1.frame_queue:
+            frame = receiver1.frame_queue.pop(0)
+            cv2.imshow("Receiver1", frame)
+
+        if receiver2.frame_queue:
+            frame = receiver2.frame_queue.pop(0)
+            cv2.imshow("Receiver2", frame)
+
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-        # time.sleep(1.0 / FPS)
 
 
 class StreamOptions(Enum):
