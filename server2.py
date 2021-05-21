@@ -49,7 +49,7 @@ def main():
 
     # car = Car()
     # initialize_server(constants, "main_tcp_server")
-    udp_server = initialize_server(constants, "udp_server_left_camera")
+    udp_server = initialize_server(constants, "udp_server_right_camera")
 
 
 
@@ -63,6 +63,7 @@ def main():
         frame = stream_receiver.get_frame()
         resized_frame = cv2.resize(frame, (640, 480))
         cv2.imshow("StreamReceiver", resized_frame)
+        # cv2.imwrite("StreamReceiver.jpg", resized_frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
         time.sleep(1.0 / 60)
