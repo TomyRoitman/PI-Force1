@@ -2,7 +2,7 @@ import json
 import socket
 import threading
 import time
-
+from multiprocessing import Process
 import cv2
 
 from car import Car
@@ -26,6 +26,7 @@ GPIO_PIN_DISTRIBUTION_PATH = "gpio_pin_distribution.json"
 LEFT_CAMERA_ADDRESS = ("192.168.1.43", 10002)
 LEFT_CAMERA_INDEX = 0
 LOCK = threading.Lock()
+PROCESSES = []
 RIGHT_CAMERA_ADDRESS = ("192.168.1.43", 10003)
 RIGHT_CAMERA_INDEX = 2
 RUNNING = True
@@ -41,8 +42,8 @@ def stream_video(host: str, port: int, camera_index: int, detector: ObjectDetect
 
         ret, frame = camera.read()
         if ret:
-            results = detector.detect(frame)
-            print(results)
+            # results = detector.detect(frame)
+            # print(results)
             streamer.send_frame(frame)
         time.sleep(1.0 / FPS)
 
@@ -52,16 +53,19 @@ def stream_video(host: str, port: int, camera_index: int, detector: ObjectDetect
 def main():
     global CAMERA_CHOSEN
     global RUNNING
+    global PROCESSES
     global THREADS
     detector = ObjectDetector("image_processing/", CONFIDENCE)
 
-    stream_video_thread1 = threading.Thread(target=stream_video, args=('192.168.1.43', 5000, 0, detector))
-    THREADS.append(stream_video_thread1)
-    stream_video_thread1.start()
+    stream_video_process1 = Process(target=stream_video, args=('192.168.1.43', 5000, 0, detector))
+    # THREADS.append(stream_video_thread1)
+    PROCESSES.append(stream_video_process1)
+    stream_video_process1.start()
 
-    stream_video_thread2 = threading.Thread(target=stream_video, args=('192.168.1.43', 5001, 2, detector))
-    THREADS.append(stream_video_thread2)
-    stream_video_thread2.start()
+    stream_video_process2 = Process(target=stream_video, args=('192.168.1.43', 5001, 2, detector))
+    PROCESSES.append(stream_video_process2)
+    # THREADS.append(stream_video_thread2)
+    stream_video_process2.start()
 
     constants = json.load(open(CONSTANTS_PATH))
     tcp_server = initialize_server(constants, "main_tcp_server", THREADS)
