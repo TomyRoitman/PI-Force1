@@ -1,12 +1,11 @@
 import json
-import socket
 import threading
 import time
-from multiprocessing import Process
-import cv2
 from subprocess import Popen
+
+import cv2
+
 from car import Car
-from image_processing.image_utils import image_resize
 from image_processing.object_detection import ObjectDetector
 from network.communication import TCPStream
 # from network.communication import TCPServer
@@ -30,7 +29,7 @@ LEFT_CAMERA_INDEX = 0
 LOCK = threading.Lock()
 PROCESSES = []
 RIGHT_CAMERA_ADDRESS = "192.168.1.43:5001"
-CAMERA_ADDRESS = {"left": LEFT_CAMERA_ADDRESS, "right":RIGHT_CAMERA_ADDRESS}
+CAMERA_ADDRESS = {"left": LEFT_CAMERA_ADDRESS, "right": RIGHT_CAMERA_ADDRESS}
 RIGHT_CAMERA_INDEX = 2
 RUNNING = True
 # STREAM_FRAME_SHAPE = (192, 256, 3)
@@ -54,21 +53,11 @@ def stream_video(host: str, port: int, camera_index: int, detector: ObjectDetect
 
 
 def main():
-    global CAMERA_CHOSEN
     global RUNNING
     global PROCESSES
     global THREADS
-    #detector = ObjectDetector("image_processing/", CONFIDENCE)
-
-    #stream_video_process1 = Process(target=stream_video, args=('192.168.1.43', 5000, 0, detector))
-    # THREADS.append(stream_video_thread1)
-    #PROCESSES.append(stream_video_process1)
-   # stream_video_process1.start()
-
-  #  stream_video_process2 = Process(target=stream_video, args=('192.168.1.43', 5001, 2, detector))
- #   PROCESSES.append(stream_video_process2)
-    # THREADS.append(stream_video_thread2)
-#    stream_video_process2.start()
+    global CAMERA_USED
+    # detector = ObjectDetector("image_processing/", CONFIDENCE)
 
     constants = json.load(open(CONSTANTS_PATH))
     tcp_server = initialize_server(constants, "main_tcp_server", THREADS)
@@ -101,8 +90,10 @@ def main():
 
             # Video stream control:
             elif code == PICommunication.MessageCode.CHOOSE_CAMERA:
-                camera = message
-                if not CAMERA_USED[camera]:
+                if CAMERA_USED[camera]:
+                    print("Camera already used!")
+                else:
+                    camera = message
                     print("Initializing stream for camera: ", camera)
                     id = CAMERA_INDEX[camera]
                     address = CAMERA_ADDRESS[camera]

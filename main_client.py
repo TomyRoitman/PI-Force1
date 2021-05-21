@@ -4,6 +4,8 @@ import threading
 from enum import Enum
 
 import cv2
+
+from image_processing.object_detection import ObjectDetector
 from network.stream_receiver import StreamReceiver
 
 from network.communication import TCPStream
@@ -25,6 +27,7 @@ h - high\n
 tr - turn right\n
 tl - turn left\n
 q - back to main menu\n"""
+CONFIDENCE = 0.75
 CONSTANTS_PATH = "constants.json"
 DESTINATION_SIZE = (640, 480)
 FPS = 24
@@ -57,17 +60,20 @@ def initialize_receivers(constants):
     return receiver1, receiver2
 
 
-def show_stream(constants):
+def handle_stream(constants):
     receiver1, receiver2 = initialize_receivers(constants)
+    detector = ObjectDetector("image_processing/", CONFIDENCE)
 
     while RUNNING:
 
         if receiver1.frame_queue:
             frame = receiver1.frame_queue.pop(0)
+            # results = detector.detect(frame)
             cv2.imshow("Receiver1", frame)
 
         if receiver2.frame_queue:
             frame = receiver2.frame_queue.pop(0)
+            # results = detector.detect(frame)
             cv2.imshow("Receiver2", frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -142,7 +148,7 @@ def main():
     global RUNNING
     global THREADS
     constants = json.load(open(CONSTANTS_PATH))
-    show_stream_thread = threading.Thread(target=show_stream, args=(constants,))
+    show_stream_thread = threading.Thread(target=handle_stream, args=(constants,))
     THREADS.append(show_stream_thread)
     show_stream_thread.start()
 
@@ -152,17 +158,6 @@ def main():
     except socket.error as e:
         raise socket.error("Could not connect to server. Failed with error:\n" + str(e))
     server_tcp_stream = TCPStream(server_socket, 1024, 4, 8, 1024)
-
-    # camera_choice = input("Please choose a camera to be displayed:\n" + CAMERA_MENU_TEXT)
-    # while not camera_choice.isdigit() or not 1 <= int(camera_choice) <= 3:
-    #     camera_choice = input(
-    #         "Invalid input. Please choose one of the following options:\n" + CAMERA_MENU_TEXT)
-    # LOCK.acquire()
-    # CAMERA_CHOSEN = StreamOptions(int(camera_choice)).name if camera_choice != "none" else None
-    # print(CAMERA_CHOSEN)
-    # LOCK.release()
-    #
-    # server_tcp_stream.send_by_size(PICommunication.choose_camera(CAMERA_CHOSEN))
 
     print("Entering main loop")
     while RUNNING:
