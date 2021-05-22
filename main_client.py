@@ -90,9 +90,9 @@ def handle_stream(constants):
             depth_map = depth_map_obj.get_depth_image(left_frame, right_frame)
             # norm_image = cv2.normalize(depth_map, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
 
-            # back_to_rgb = cv2.applyColorMap(depth_map, cv2.COLORMAP_SPRING)
+            back_to_rgb = cv2.applyColorMap(depth_map, cv2.COLORMAP_SPRING)
             cv2.imshow("disparity", depth_map)
-            # cv2.imshow("colored disparity", back_to_rgb)
+            cv2.imshow("colored disparity", back_to_rgb)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
