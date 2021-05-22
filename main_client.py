@@ -4,6 +4,7 @@ import threading
 from enum import Enum
 
 import cv2
+import matplotlib
 
 from image_processing.object_detection import ObjectDetector
 from image_processing.stereo import StereoDepthMap
@@ -11,6 +12,7 @@ from network.communication import TCPStream
 from network.protocol import PICommunication
 from network.stream_receiver import StreamReceiver
 
+from matplotlib import pyplot as plt
 CAMERA_MENU_TEXT = """
 [1] Left Camera\n
 [2] Right Camera\n
@@ -86,11 +88,11 @@ def handle_stream(constants):
 
         if left_ret and right_ret:
             depth_map = depth_map_obj.get_depth_image(left_frame, right_frame)
-            norm_image = cv2.normalize(depth_map, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+            # norm_image = cv2.normalize(depth_map, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
 
-            back_to_rgb = cv2.applyColorMap(depth_map, cv2.COLORMAP_SPRING)
-            cv2.imshow("disparity", norm_image)
-            cv2.imshow("colored disparity", back_to_rgb)
+            # back_to_rgb = cv2.applyColorMap(depth_map, cv2.COLORMAP_SPRING)
+            cv2.imshow("disparity", depth_map)
+            # cv2.imshow("colored disparity", back_to_rgb)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
