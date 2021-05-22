@@ -1,10 +1,10 @@
 import json
 import socket
 import threading
+import time
 from enum import Enum
 
 import cv2
-import matplotlib
 
 from image_processing.object_detection import ObjectDetector
 from image_processing.stereo import StereoDepthMap
@@ -12,7 +12,6 @@ from network.communication import TCPStream
 from network.protocol import PICommunication
 from network.stream_receiver import StreamReceiver
 
-from matplotlib import pyplot as plt
 CAMERA_MENU_TEXT = """
 [1] Left Camera\n
 [2] Right Camera\n
@@ -46,7 +45,8 @@ STREAM_FRAME_GRID_COLUMNS = 4
 # RECEIVERS = {}
 RUNNING = True
 THREADS = []
-
+FRAME_QUEUE = []
+DEPTH_MAP_QUEUE = []
 
 def initialize_receivers(constants):
     receiver1 = StreamReceiver('0.0.0.0', 5000)
@@ -62,19 +62,38 @@ def initialize_receivers(constants):
     return receiver1, receiver2
 
 
+def create_depth_map():
+    depth_map_obj = StereoDepthMap(STEREO_CALIBRATION_FILE)
+    while RUNNING:
+        LOCK.acquire()
+        if FRAME_QUEUE:
+            left_frame, right_frame = FRAME_QUEUE.pop(0)
+            DEPTH_MAP_QUEUE.append(depth_map_obj.get_depth_image(left_frame, right_frame))
+        LOCK.release()
+        # time.sleep(1.0 / 60)
+        # cv2.waitKey(1)
+
 def handle_stream(constants):
+    global THREADS
+
+    depth_map_thread = threading.Thread(target=create_depth_map)
+    depth_map_thread.start()
+    LOCK.acquire()
+    THREADS.append(depth_map_thread)
+    LOCK.release()
+
     receiver1, receiver2 = initialize_receivers(constants)
     detector = ObjectDetector("image_processing/", CONFIDENCE)
-    depth_map_obj = StereoDepthMap(STEREO_CALIBRATION_FILE)
     left_ret = False
     right_frame = False
+
     while RUNNING:
 
         if receiver1.frame_queue:
             left_ret = True
             left_frame = receiver1.frame_queue.pop(0)
             # results = detector.detect(frame)
-            cv2.imshow("Receiver1", left_frame)
+            # cv2.imshow("Receiver1", left_frame)
         else:
             left_ret = False
 
@@ -82,20 +101,29 @@ def handle_stream(constants):
             right_ret = True
             right_frame = receiver2.frame_queue.pop(0)
             # results = detector.detect(frame)
-            cv2.imshow("Receiver2", right_frame)
+            # cv2.imshow("Receiver2", right_frame)
         else:
             right_ret = False
 
         if left_ret and right_ret:
-            depth_map = depth_map_obj.get_depth_image(left_frame, right_frame)
-            # norm_image = cv2.normalize(depth_map, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+            # LOCK.acquire()
+            FRAME_QUEUE.append((left_frame, right_frame))
 
-            back_to_rgb = cv2.applyColorMap(depth_map, cv2.COLORMAP_SPRING)
-            cv2.imshow("disparity", depth_map)
-            cv2.imshow("colored disparity", back_to_rgb)
+            if DEPTH_MAP_QUEUE:
+                depth_map = DEPTH_MAP_QUEUE.pop(0)
+                cv2.imshow("Depth map", depth_map)
+            # cv2.imshow("disparity", depth_map)
+            #     print("Showed depth map")
+            # LOCK.release()
+            # depth_map = depth_map_obj.get_depth_image(left_frame, right_frame)
+            # norm_image = cv2.normalize(depth_map, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+            # back_to_rgb = cv2.applyColorMap(depth_map, cv2.COLORMAP_SPRING)
+
+            # cv2.imshow("colored disparity", back_to_rgb)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+        time.sleep(1.0 / 24)
 
 
 class StreamOptions(Enum):

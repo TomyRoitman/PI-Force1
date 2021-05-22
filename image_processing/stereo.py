@@ -12,34 +12,39 @@ class StereoDepthMap:
         print("Finished loading stereo calibration")
 
     def __load_stereo_calibration(self):
-        self.K1, self.D1, self.K2, self.D2, self.R, self.T, self.E, self.F, self.R1, self.R2, self.P1, self.P2, self.Q = load_stereo_coefficients(self.stereo_calibration_file)  # Get cams params
-        
+        self.K1, self.D1, self.K2, self.D2, self.R, self.T, self.E, self.F, self.R1, self.R2, self.P1, self.P2, self.Q = load_stereo_coefficients(
+            self.stereo_calibration_file)  # Get cams params
+
     def get_depth_image(self, left_frame, right_frame):
         height, width, channel = left_frame.shape  # We will use the shape for remap
-        print(f"height {height}, width {width}, channel {channel}")
+        # print(f"height {height}, width {width}, channel {channel}")
         # Undistortion and Rectification part!
-        leftMapX, leftMapY = cv2.initUndistortRectifyMap(self.K1, self.D1, self.R1, self.P1, (width, height), cv2.CV_32FC1)
+        leftMapX, leftMapY = cv2.initUndistortRectifyMap(self.K1, self.D1, self.R1, self.P1, (width, height),
+                                                         cv2.CV_32FC1)
         left_rectified = cv2.remap(left_frame, leftMapX, leftMapY, cv2.INTER_LINEAR, cv2.BORDER_CONSTANT)
-        rightMapX, rightMapY = cv2.initUndistortRectifyMap(self.K2, self.D2, self.R2, self.P2, (width, height), cv2.CV_32FC1)
+        rightMapX, rightMapY = cv2.initUndistortRectifyMap(self.K2, self.D2, self.R2, self.P2, (width, height),
+                                                           cv2.CV_32FC1)
         right_rectified = cv2.remap(right_frame, rightMapX, rightMapY, cv2.INTER_LINEAR, cv2.BORDER_CONSTANT)
-         # We need grayscale for disparity map.
+        # We need grayscale for disparity map.
         gray_left = cv2.cvtColor(left_rectified, cv2.COLOR_BGR2GRAY)
         gray_right = cv2.cvtColor(right_rectified, cv2.COLOR_BGR2GRAY)
         disparity_image = self.__create_depth_map(gray_left, gray_right)  # Get the disparity map
         return disparity_image
 
-
     def __create_depth_map(self, imgL, imgR):
-        """ Depth map calculation. Works with SGBM and WLS. Need rectified images, returns depth map ( left to right disparity ) """
+        """ Depth map calculation. Works with SGBM and WLS. Need rectified images, returns depth map ( left to right
+        disparity ) """
         # SGBM Parameters -----------------
-        window_size = 5  # wsize default 3; 5; 7 for SGBM reduced size image; 15 for SGBM full size image (1300px and above); 5 Works nicely
+        window_size = 3  # wsize default 3; 5; 7 for SGBM reduced size image; 15 for SGBM full size image (1300px and
+        # above); 5 Works nicely
 
         left_matcher = cv2.StereoSGBM_create(
             minDisparity=-1,
-            numDisparities=5*16,  # max_disp has to be dividable by 16 f. E. HH 192, 256
+            numDisparities=3 * 16,  # max_disp has to be dividable by 16 f. E. HH 192, 256
             blockSize=window_size,
             P1=8 * 3 * window_size,
-            # wsize default 3; 5; 7 for SGBM reduced size image; 15 for SGBM full size image (1300px and above); 5 Works nicely
+            # wsize default 3; 5; 7 for SGBM reduced size image; 15 for SGBM full size image (1300px and above); 5
+            # Works nicely
             P2=32 * 3 * window_size,
             disp12MaxDiff=12,
             uniquenessRatio=10,
@@ -52,7 +57,7 @@ class StereoDepthMap:
         # FILTER Parameters
         lmbda = 80000
         sigma = 1.3
-        visual_multiplier = 6
+        visual_multiplier = 5
 
         wls_filter = cv2.ximgproc.createDisparityWLSFilter(matcher_left=left_matcher)
         wls_filter.setLambda(lmbda)
@@ -69,5 +74,3 @@ class StereoDepthMap:
         filteredImg = np.uint8(filteredImg)
 
         return filteredImg
-
-
