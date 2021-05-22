@@ -8,7 +8,7 @@ from image_processing.stereo import StereoDepthMap
 
 def main():
     left_camera = Camera(1, "image_processing/calibration/left_cam.yml", True)
-    right_camera = Camera(2, "image_processing/calibration/right_cam.yml", True)
+    right_camera = Camera(4, "image_processing/calibration/right_cam.yml", True)
 
     depth_map_obj = StereoDepthMap("image_processing/calibration/stereo_cam.yml")
     print(depth_map_obj.__dict__)

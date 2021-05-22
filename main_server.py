@@ -16,7 +16,7 @@ from network.streamer import Streamer
 CAMERA_OPENED = {'left': False, 'right': False}
 CAMERAS = {}
 CAMERA_USED = {"left": False, "right": False}
-CAMERA_INDEX = {"left": 0, "right": 2}
+CAMERA_INDEX = {"left": 1, "right": 4}
 CONFIDENCE = 0.75
 CONSTANTS_PATH = "constants.json"
 # DESTINATION_SIZE = (160, 120)
