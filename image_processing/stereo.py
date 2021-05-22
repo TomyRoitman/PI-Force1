@@ -19,28 +19,20 @@ class StereoDepthMap:
         print(f"height {height}, width {width}, channel {channel}")
         # Undistortion and Rectification part!
         leftMapX, leftMapY = cv2.initUndistortRectifyMap(self.K1, self.D1, self.R1, self.P1, (width, height), cv2.CV_32FC1)
-        print("1a")
         left_rectified = cv2.remap(left_frame, leftMapX, leftMapY, cv2.INTER_LINEAR, cv2.BORDER_CONSTANT)
-        print("1b")
         rightMapX, rightMapY = cv2.initUndistortRectifyMap(self.K2, self.D2, self.R2, self.P2, (width, height), cv2.CV_32FC1)
-        print("2a")
         right_rectified = cv2.remap(right_frame, rightMapX, rightMapY, cv2.INTER_LINEAR, cv2.BORDER_CONSTANT)
-        print("2b")
-        print("Finished undistortion")
          # We need grayscale for disparity map.
         gray_left = cv2.cvtColor(left_rectified, cv2.COLOR_BGR2GRAY)
         gray_right = cv2.cvtColor(right_rectified, cv2.COLOR_BGR2GRAY)
-        print("Finished grayscale")
-        print("Creating depth map")
         disparity_image = self.__create_depth_map(gray_left, gray_right)  # Get the disparity map
-        print("Finished creating depth map")
         return disparity_image
 
 
     def __create_depth_map(self, imgL, imgR):
         """ Depth map calculation. Works with SGBM and WLS. Need rectified images, returns depth map ( left to right disparity ) """
         # SGBM Parameters -----------------
-        window_size = 3  # wsize default 3; 5; 7 for SGBM reduced size image; 15 for SGBM full size image (1300px and above); 5 Works nicely
+        window_size = 5  # wsize default 3; 5; 7 for SGBM reduced size image; 15 for SGBM full size image (1300px and above); 5 Works nicely
 
         left_matcher = cv2.StereoSGBM_create(
             minDisparity=-1,
@@ -72,7 +64,8 @@ class StereoDepthMap:
         dispr = np.int16(dispr)
         filteredImg = wls_filter.filter(displ, imgL, None, dispr)  # important to put "imgL" here!!!
 
-        filteredImg = cv2.normalize(src=filteredImg, dst=filteredImg, beta=0, alpha=255, norm_type=cv2.NORM_MINMAX);
+        # filteredImg = cv2.normalize(src=filteredImg, dst=filteredImg, beta=0, alpha=255, norm_type=cv2.NORM_MINMAX);
+        filteredImg = cv2.normalize(src=filteredImg, dst=filteredImg, beta=255, alpha=0, norm_type=cv2.NORM_MINMAX);
         filteredImg = np.uint8(filteredImg)
 
         return filteredImg
