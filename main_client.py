@@ -6,6 +6,7 @@ from enum import Enum
 import cv2
 
 from image_processing.object_detection import ObjectDetector
+from image_processing.stereo import StereoDepthMap
 from network.communication import TCPStream
 from network.protocol import PICommunication
 from network.stream_receiver import StreamReceiver
@@ -36,6 +37,7 @@ MAIN_MENU_TEXT = """
 [2] Choose stream source\n
 [3] Exit\n"""
 # STREAM_FRAME_SHAPE = (192, 256, 3)
+STEREO_CALIBRATION_FILE = "image_processing/calibration/stereo_cam.yml"
 STREAM_FRAME_SHAPE = (192, 256, 3)
 STREAM_FRAME_GRID_ROWS = 4
 STREAM_FRAME_GRID_COLUMNS = 4
@@ -61,18 +63,32 @@ def initialize_receivers(constants):
 def handle_stream(constants):
     receiver1, receiver2 = initialize_receivers(constants)
     detector = ObjectDetector("image_processing/", CONFIDENCE)
-
+    depth_map_obj = StereoDepthMap(STEREO_CALIBRATION_FILE)
+    left_ret = False
+    right_frame = False
     while RUNNING:
 
         if receiver1.frame_queue:
+            left_ret = True
             left_frame = receiver1.frame_queue.pop(0)
             # results = detector.detect(frame)
             cv2.imshow("Receiver1", left_frame)
+        else:
+            left_ret = False
 
         if receiver2.frame_queue:
+            right_ret = True
             right_frame = receiver2.frame_queue.pop(0)
             # results = detector.detect(frame)
             cv2.imshow("Receiver2", right_frame)
+        else:
+            right_ret = False
+
+        if left_ret and right_ret:
+            depth_map = depth_map_obj.get_depth_image(left_frame, right_frame)
+            back_to_rgb = cv2.applyColorMap(depth_map, cv2.COLORMAP_SPRING)
+            cv2.imshow("disparity", depth_map)
+            cv2.imshow("colored disparity", back_to_rgb)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break

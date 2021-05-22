@@ -83,8 +83,8 @@ def main():
             break
         elif key == ord('c'):
             print("Saving picture", i)
-            cv2.imwrite("../image_processing/calibration/images/cal_left" + str(i) + ".png", left_frame)
-            cv2.imwrite("../image_processing/calibration/images/cal_right" + str(i) + ".png", right_frame)
+            cv2.imwrite("../image_processing/calibration/images/cal_left" + str(i) + ".jpg", left_frame)
+            cv2.imwrite("../image_processing/calibration/images/cal_right" + str(i) + ".jpg", right_frame)
             i += 1
 
 if __name__ == '__main__':

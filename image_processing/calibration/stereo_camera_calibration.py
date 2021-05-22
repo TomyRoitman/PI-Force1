@@ -1,3 +1,4 @@
+import sys
 
 import numpy as np
 import cv2
@@ -43,6 +44,7 @@ def load_image_points(left_dir, left_prefix, right_dir, right_prefix, image_form
     objp = np.zeros((height * width, 3), np.float32)
     objp[:, :2] = np.mgrid[0:width, 0:height].T.reshape(-1, 2)
 
+    print(type(objp), type(square_size))
     objp = objp * square_size  # Create real world coords. Use your metric.
 
     # Arrays to store object points and image points from all the images.
