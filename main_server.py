@@ -35,7 +35,7 @@ RUNNING = True
 # STREAM_FRAME_SHAPE = (192, 256, 3)
 STREAMERS = {}
 THREADS = []
-
+PROCESSES = []
 
 
 
@@ -86,7 +86,8 @@ def main():
                     address = CAMERA_ADDRESS[camera]
                     print(id, address)
                     LOCK.acquire()
-                    PROCESSES.append(Popen(['python3', 'network/streamer.py', '-a', address, '-i', str(id)]))
+                    p = Popen(['python3', 'network/streamer.py', '-a', address, '-i', str(id)])
+                    PROCESSES.append(p)
                     CAMERA_OPENED[camera] = True
                     LOCK.release()
 
@@ -104,7 +105,9 @@ def main():
     LOCK.acquire()
     RUNNING = False
     LOCK.release()
+    print("Processes: ", PROCESSES)
     for p in PROCESSES:
+        print("Killing camera process with id: ", p.pid)
         p.kill()
     for thread in THREADS:
         thread.join()
