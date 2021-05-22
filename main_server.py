@@ -37,19 +37,6 @@ STREAMERS = {}
 THREADS = []
 
 
-def stream_video(host: str, port: int, camera_index: int, detector: ObjectDetector):
-    streamer = Streamer(host, port)
-    camera = cv2.VideoCapture(camera_index)
-    while RUNNING:
-
-        ret, frame = camera.read()
-        if ret:
-            # results = detector.detect(frame)
-            # print(results)
-            streamer.send_frame(frame)
-        time.sleep(1.0 / FPS)
-
-    cv2.destroyAllWindows()
 
 
 def main():
@@ -98,10 +85,8 @@ def main():
                     id = CAMERA_INDEX[camera]
                     address = CAMERA_ADDRESS[camera]
                     print(id, address)
-                    l = ['python3', 'network/streamer.py', '-a', address, '-i', str(id)]
-                    print(l)
-                    Popen(l)
                     LOCK.acquire()
+                    PROCESSES.append(Popen(['python3', 'network/streamer.py', '-a', address, '-i', str(id)]))
                     CAMERA_OPENED[camera] = True
                     LOCK.release()
 
@@ -119,7 +104,8 @@ def main():
     LOCK.acquire()
     RUNNING = False
     LOCK.release()
-
+    for p in PROCESSES:
+        p.kill()
     for thread in THREADS:
         thread.join()
 
