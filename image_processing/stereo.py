@@ -1,16 +1,15 @@
-import numpy as np
 import cv2
+import numpy as np
 
 from image_processing.calibration.camera_calibration_store import load_stereo_coefficients
 
+
 class StereoDepthMap:
-    def __init__(self, left_camera, right_camera, stereo_calibration_file):
-        self.left_camera = left_camera
-        self.right_camera = right_camera
+    def __init__(self, stereo_calibration_file):
         self.stereo_calibration_file = stereo_calibration_file
-        print("Loading")
+        print("Loading stereo calibration")
         self.__load_stereo_calibration()
-        print("Finished loading")
+        print("Finished loading stereo calibration")
 
     def __load_stereo_calibration(self):
         self.K1, self.D1, self.K2, self.D2, self.R, self.T, self.E, self.F, self.R1, self.R2, self.P1, self.P2, self.Q = load_stereo_coefficients(self.stereo_calibration_file)  # Get cams params

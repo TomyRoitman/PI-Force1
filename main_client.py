@@ -6,12 +6,10 @@ from enum import Enum
 import cv2
 
 from image_processing.object_detection import ObjectDetector
-from network.stream_receiver import StreamReceiver
-
 from network.communication import TCPStream
 from network.protocol import PICommunication
+from network.stream_receiver import StreamReceiver
 
-CAMERA_CHOSEN = None
 CAMERA_MENU_TEXT = """
 [1] Left Camera\n
 [2] Right Camera\n
@@ -32,7 +30,7 @@ CONSTANTS_PATH = "constants.json"
 DESTINATION_SIZE = (640, 480)
 FPS = 24
 LOCK = threading.Lock()
-MAIN_TCP_SERVER_ADDRESS = ("192.168.1.47", 10001)
+MAIN_TCP_SERVER_ADDRESS = ("192.168.1.35", 10001)
 MAIN_MENU_TEXT = """
 [1] Control car movement\n
 [2] Choose stream source\n
@@ -67,14 +65,14 @@ def handle_stream(constants):
     while RUNNING:
 
         if receiver1.frame_queue:
-            frame = receiver1.frame_queue.pop(0)
+            left_frame = receiver1.frame_queue.pop(0)
             # results = detector.detect(frame)
-            cv2.imshow("Receiver1", frame)
+            cv2.imshow("Receiver1", left_frame)
 
         if receiver2.frame_queue:
-            frame = receiver2.frame_queue.pop(0)
+            right_frame = receiver2.frame_queue.pop(0)
             # results = detector.detect(frame)
-            cv2.imshow("Receiver2", frame)
+            cv2.imshow("Receiver2", right_frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -132,9 +130,6 @@ def handle_stream_source_menu(server_tcp_stream: TCPStream):
         if command in ("1", "2", "3"):
             # Left, Right or None
             server_tcp_stream.send_by_size(PICommunication.choose_camera(StreamOptions(int(command)).name))
-            LOCK.acquire()
-            CAMERA_CHOSEN = StreamOptions(int(command)).name
-            LOCK.release()
             break
         elif command == "4":
             # Back to main menu
@@ -144,7 +139,6 @@ def handle_stream_source_menu(server_tcp_stream: TCPStream):
 
 
 def main():
-    global CAMERA_CHOSEN
     global RUNNING
     global THREADS
     constants = json.load(open(CONSTANTS_PATH))

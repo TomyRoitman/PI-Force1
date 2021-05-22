@@ -64,21 +64,28 @@ def main():
     receiver2 = StreamReceiver('0.0.0.0', 5001)
     t2 = threading.Thread(target=receiver2.receive_stream)
     t2.start()
-
+    left_frame = None
+    right_frame = None
+    i = 0
     while True:
         if receiver1.frame_queue:
-            frame = receiver1.frame_queue.pop(0)
-            cv2.imshow("Receiver1", frame)
+            left_frame = receiver1.frame_queue.pop(0)
+            cv2.imshow("Receiver1", left_frame)
 
         if receiver2.frame_queue:
-            frame2 = receiver2.frame_queue.pop(0)
-            cv2.imshow("Receiver2", frame2)
+            right_frame = receiver2.frame_queue.pop(0)
+            cv2.imshow("Receiver2", right_frame)
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        key = cv2.waitKey(1)
+        if key & 0xFF == ord('q'):
             receiver1.running = False
             receiver2.running = False
             break
-
+        elif key == ord('c'):
+            print("Saving picture", i)
+            cv2.imwrite("../image_processing/calibration/images/cal_left" + str(i) + ".png", left_frame)
+            cv2.imwrite("../image_processing/calibration/images/cal_right" + str(i) + ".png", right_frame)
+            i += 1
 
 if __name__ == '__main__':
     main()

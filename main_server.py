@@ -56,7 +56,7 @@ def main():
     global RUNNING
     global PROCESSES
     global THREADS
-    global CAMERA_USED
+    global CAMERA_USEDc
     # detector = ObjectDetector("image_processing/", CONFIDENCE)
 
     constants = json.load(open(CONSTANTS_PATH))
