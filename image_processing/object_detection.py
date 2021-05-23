@@ -25,11 +25,12 @@ class ObjectDetector:
     def load_model(self):
         return cv2.dnn.readNetFromCaffe(self.prototxt, self.model)
 
-    def detect(self, frame):
+    def detect(self, base_frame):
         # grab the frame dimensions and convert it to a blob
+        frame = base_frame
         (h, w) = frame.shape[:2]
         blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)),
-                                     0.007843, (300, 300), 127.5)
+                                     0.007843, (300, 300), cv2.CV_8U)  # 127.5)
 
         # pass the blob through the network and obtain the detections and
         # predictions
@@ -59,13 +60,19 @@ class ObjectDetector:
                 cv2.putText(frame, label, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, ObjectDetector.COLORS[idx], 2)
 
                 results.append(DetectionResult(label, confidence, coordinates))
-        return results
+        return frame, results
 
 
 if __name__ == '__main__':
-    cap = cv2.VideoCapture(0)
-    detector = ObjectDetector(0.7)
+    # cap = cv2.VideoCapture(0)
+    detector = ObjectDetector(".", 0.7)
     detections = ""
+    frame = cv2.imread("../left_frame.jpg")
+    frame, left_results = detector.detect(frame)
+
+    frame = cv2.imread("../right_frame.jpg")
+    frame, right_results = detector.detect(frame)
+
     while True:
         ret, frame = cap.read()
         if ret:

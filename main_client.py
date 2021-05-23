@@ -6,6 +6,7 @@ from enum import Enum
 
 import cv2
 
+from image_processing.distance import DistanceCalculator2
 from image_processing.object_detection import ObjectDetector
 from image_processing.stereo import StereoDepthMap
 from network.communication import TCPStream
@@ -48,6 +49,7 @@ THREADS = []
 FRAME_QUEUE = []
 DEPTH_MAP_QUEUE = []
 
+
 def initialize_receivers(constants):
     receiver1 = StreamReceiver('0.0.0.0', 5000)
     t1 = threading.Thread(target=receiver1.receive_stream)
@@ -65,14 +67,20 @@ def initialize_receivers(constants):
 def create_depth_map():
     depth_map_obj = StereoDepthMap(STEREO_CALIBRATION_FILE)
     while RUNNING:
+        ret = False
         LOCK.acquire()
         if FRAME_QUEUE:
             left_frame, right_frame = FRAME_QUEUE.pop(0)
-            DEPTH_MAP_QUEUE.append(depth_map_obj.get_depth_image(left_frame, right_frame))
+            ret = True
         LOCK.release()
-        # time.sleep(1.0 / 60)
-        # cv2.waitKey(1)
+        if ret:
+            depth_map = depth_map_obj.get_depth_image(left_frame, right_frame)
+            cv2.imshow("Depth Map", depth_map)
+            DEPTH_MAP_QUEUE.append(depth_map)
+        cv2.waitKey(1)
+        time.sleep(1.0 / 24)
 
+from image_processing.calibration.camera_calibration_store import load_coefficients
 def handle_stream(constants):
     global THREADS
 
@@ -81,49 +89,75 @@ def handle_stream(constants):
     LOCK.acquire()
     THREADS.append(depth_map_thread)
     LOCK.release()
-
+    distance_calculator = DistanceCalculator2()
     receiver1, receiver2 = initialize_receivers(constants)
     detector = ObjectDetector("image_processing/", CONFIDENCE)
     left_ret = False
-    right_frame = False
-
+    right_ret = False
+    left_frame = None
+    right_frame = None
+    left_results = []
+    right_results = []
     while RUNNING:
-
+        current_frames = []
         if receiver1.frame_queue:
             left_ret = True
             left_frame = receiver1.frame_queue.pop(0)
-            # results = detector.detect(frame)
-            # cv2.imshow("Receiver1", left_frame)
+            current_frames.append(left_frame)
+            frame, left_results = detector.detect(left_frame)
+            h, w = frame.shape[:2]
+            cv2.line(frame, (0, int(h / 2) - 2), (w - 1, int(h / 2) - 2), (0, 0, 0), 2)
+            cv2.line(frame, (int(w / 2) - 2, 0), (int(w / 2) - 2, h - 1), (0, 0, 0), 2)
+
+            cv2.imshow("Receiver1", left_frame)
         else:
             left_ret = False
 
         if receiver2.frame_queue:
             right_ret = True
             right_frame = receiver2.frame_queue.pop(0)
-            # results = detector.detect(frame)
-            # cv2.imshow("Receiver2", right_frame)
+            current_frames.append(right_frame)
+            frame, right_results = detector.detect(right_frame)
+            h, w = frame.shape[:2]
+            cv2.line(frame, (0, int(h / 2) - 2), (w - 1, int(h / 2) - 2), (0, 0, 0), 2)
+            cv2.line(frame, (int(w / 2) - 2, 0), (int(w / 2) - 2, h - 1), (0, 0, 0), 2)
+
+            cv2.imshow("Receiver2", right_frame)
         else:
             right_ret = False
 
         if left_ret and right_ret:
-            # LOCK.acquire()
-            FRAME_QUEUE.append((left_frame, right_frame))
-
+            LOCK.acquire()
+            FRAME_QUEUE.append(current_frames)
             if DEPTH_MAP_QUEUE:
                 depth_map = DEPTH_MAP_QUEUE.pop(0)
-                cv2.imshow("Depth map", depth_map)
-            # cv2.imshow("disparity", depth_map)
-            #     print("Showed depth map")
-            # LOCK.release()
-            # depth_map = depth_map_obj.get_depth_image(left_frame, right_frame)
-            # norm_image = cv2.normalize(depth_map, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-            # back_to_rgb = cv2.applyColorMap(depth_map, cv2.COLORMAP_SPRING)
-
-            # cv2.imshow("colored disparity", back_to_rgb)
+                # cv2.imshow("Depth map", depth_map)
+            LOCK.release()
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-        time.sleep(1.0 / 24)
+        # if cv2.waitKey(1) & 0xFF == ord('c'):
+        left_results = list(filter(lambda a: "person" in a.label, left_results))
+        right_results = list(filter(lambda a: "person" in a.label, right_results))
+        if not (left_results and right_results):
+            continue
+
+        # left_results.sort(key=lambda a: a.label)
+        # right_results.sort(key=lambda a: a.label)
+        l_result = left_results[0]
+        r_result = right_results[0]
+        l_x = (l_result.location[0] + l_result.location[2]) / 2.0
+        r_x = (r_result.location[0] + r_result.location[2]) / 2.0
+        print("Distance from person: ", distance_calculator.calculate_distance(l_x, r_x))
+
+        # cv2.imwrite("left_frame.jpg", left_frame)
+        # with open("left.txt", "wb") as f:
+        #     f.write(str(left_results[0].location).encode())
+        # cv2.imwrite("right_frame.jpg", right_frame)
+        # with open("right.txt", "wb") as f:
+        #     f.write(str(right_results[0].location).encode())
+        # print("Saved")
+        # time.sleep(1.0 / 60)
 
 
 class StreamOptions(Enum):
