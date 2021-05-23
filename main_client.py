@@ -6,6 +6,7 @@ from enum import Enum
 
 import cv2
 
+from gui import Gui
 from image_processing.distance import DistanceCalculator2
 from image_processing.object_detection import ObjectDetector
 from image_processing.stereo import StereoDepthMap
@@ -80,7 +81,6 @@ def create_depth_map():
         cv2.waitKey(1)
         time.sleep(1.0 / 24)
 
-from image_processing.calibration.camera_calibration_store import load_coefficients
 def handle_stream(constants):
     global THREADS
 
@@ -92,10 +92,6 @@ def handle_stream(constants):
     distance_calculator = DistanceCalculator2()
     receiver1, receiver2 = initialize_receivers(constants)
     detector = ObjectDetector("image_processing/", CONFIDENCE)
-    left_ret = False
-    right_ret = False
-    left_frame = None
-    right_frame = None
     left_results = []
     right_results = []
     while RUNNING:
@@ -142,82 +138,30 @@ def handle_stream(constants):
         if not (left_results and right_results):
             continue
 
-        # left_results.sort(key=lambda a: a.label)
-        # right_results.sort(key=lambda a: a.label)
         l_result = left_results[0]
         r_result = right_results[0]
         l_x = (l_result.location[0] + l_result.location[2]) / 2.0
         r_x = (r_result.location[0] + r_result.location[2]) / 2.0
         print("Distance from person: ", distance_calculator.calculate_distance(l_x, r_x))
 
-        # cv2.imwrite("left_frame.jpg", left_frame)
-        # with open("left.txt", "wb") as f:
-        #     f.write(str(left_results[0].location).encode())
-        # cv2.imwrite("right_frame.jpg", right_frame)
-        # with open("right.txt", "wb") as f:
-        #     f.write(str(right_results[0].location).encode())
-        # print("Saved")
-        # time.sleep(1.0 / 60)
 
-
-class StreamOptions(Enum):
-    left = 1
-    right = 2
-    none = 3
-
-
-def isfloat(value):
-    try:
-        float(value)
-        return True
-    except ValueError:
-        return False
-
-
-def handle_car_movement_control_menu(server_tcp_stream: TCPStream):
-    while RUNNING:
-        command = input("Please choose a stream mode from below:\n" + CAR_CONTROL_MENU_TEXT)
-        message = None
-        if command == "f":
-            message = PICommunication.move_forward()
-        elif command == "b":
-            message = PICommunication.move_backwards()
-        elif command == "s":
-            message = PICommunication.stop()
-        elif command == "l":
-            message = PICommunication.set_low_speed()
-        elif command == "m":
-            message = PICommunication.set_medium_speed()
-        elif command == "h":
-            message = PICommunication.set_high_speed()
-        elif command == "tr":
-            duration = 0
-            message = PICommunication.turn_right(float(duration))
-        elif command == "tl":
-            duration = 0
-            message = PICommunication.turn_left(float(duration))
-        elif command == "q":
-            break
-        else:
-            print(f"Command unknown: {command}\n")
-            continue
-        if message:
-            server_tcp_stream.send_by_size(message)
-
-
-def handle_stream_source_menu(server_tcp_stream: TCPStream):
-    global CAMERA_CHOSEN
-    command = input("Please choose a stream mode from below:\n" + CAMERA_MENU_TEXT)
-    while RUNNING:
-        if command in ("1", "2", "3"):
-            # Left, Right or None
-            server_tcp_stream.send_by_size(PICommunication.choose_camera(StreamOptions(int(command)).name))
-            break
-        elif command == "4":
-            # Back to main menu
-            break
-        else:
-            print(f"Command unknown: {command}\n")
+class Commands(Enum):
+    DISCONNECT = PICommunication.disconnect("Exit")  # = Disconnect
+    HIGH_SPEED = PICommunication.set_high_speed()  # = Set high speed
+    LOW_SPEED = PICommunication.set_low_speed()  # = Set low speed
+    MEDIUM_SPEED = PICommunication.set_medium_speed()  # = Set medium speed
+    MOVE_FORWARD = PICommunication.move_forward()  # = Move forward
+    MOVE_BACKWARDS = PICommunication.move_backwards()  # = Move backwards
+    TURN_LEFT =  PICommunication.turn_left()  # = Turn left
+    TURN_RIGHT = PICommunication.turn_right()  # = Turn right
+    CAMERA_LEFT = PICommunication.move_camera_right()
+    CAMERA_RIGHT = PICommunication.move_camera_left()
+    CAMERA_UP = PICommunication.move_camera_up()
+    CAMERA_DOWN = PICommunication.move_camera_down()
+    TOGGLE_DEPTH_MAP = None
+    TOGGLE_OBJECT_DETECTION = None
+    TOGGLE_DISTANCE = None
+    RESET_CAMERA_POSITION = PICommunication.reset_camera_position()
 
 
 def main():
@@ -233,23 +177,31 @@ def main():
         server_socket.connect(MAIN_TCP_SERVER_ADDRESS)
     except socket.error as e:
         raise socket.error("Could not connect to server. Failed with error:\n" + str(e))
+
+    gui_object = Gui()
     server_tcp_stream = TCPStream(server_socket, 1024, 4, 8, 1024)
 
-    print("Entering main loop")
-    while RUNNING:
-        command = input("Please choose an action from below:\n" + MAIN_MENU_TEXT)
-        if command == "1":
-            handle_car_movement_control_menu(server_tcp_stream)
-        elif command == "2":
-            handle_stream_source_menu(server_tcp_stream)
-        elif command == "3":
-            # Disconnect
-            server_tcp_stream.send_by_size(PICommunication.disconnect("Exit"))
-            server_socket.close()
-            break
-        else:
-            print(f"Command unknown: {command}\n")
+    print("[Log] Sending: Request for camera initialization")
+    server_tcp_stream.send_by_size(PICommunication.initialize_cameras())
 
+    print("Starting main loop")
+    while RUNNING:
+        commands = gui_object.get_events()
+        for command in commands:
+            if command == Commands.TOGGLE_DEPTH_MAP:
+                pass
+            elif command == Commands.TOGGLE_OBJECT_DETECTION:
+                pass
+            elif command == Commands.TOGGLE_DISTANCE:
+                pass
+            elif command == Commands.DISCONNECT:
+                server_tcp_stream.send_by_size(PICommunication.disconnect("Exit"))
+                server_socket.close()
+                break
+            else:
+                server_tcp_stream.send_by_size(command.value)
+        if not RUNNING:
+            break
     LOCK.acquire()
     RUNNING = False
     LOCK.release()
