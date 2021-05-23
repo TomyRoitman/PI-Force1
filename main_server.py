@@ -76,21 +76,21 @@ def main():
                 car.turn_left()
 
             # Video stream control:
-            elif code == PICommunication.MessageCode.CHOOSE_CAMERA:
-                camera = message
-                if CAMERA_USED[camera]:
-                    print("Camera already used!")
-                else:
-                    print("Initializing stream for camera: ", camera)
-                    id = CAMERA_INDEX[camera]
-                    address = CAMERA_ADDRESS[camera]
-                    print(id, address)
-                    LOCK.acquire()
-                    p = Popen(['python3', 'network/streamer.py', '-a', address, '-i', str(id)])
-                    PROCESSES.append(p)
-                    CAMERA_OPENED[camera] = True
-                    LOCK.release()
-
+            elif code == PICommunication.MessageCode.INITIALIZE_CAMERAS:
+                cameras = ["left", "right"]
+                for camera in cameras:
+                    if CAMERA_USED[camera]:
+                        print("Camera already used!")
+                    else:
+                        print("Initializing stream for camera: ", camera)
+                        id = CAMERA_INDEX[camera]
+                        address = CAMERA_ADDRESS[camera]
+                        print(id, address)
+                        LOCK.acquire()
+                        p = Popen(['python3', 'network/streamer.py', '-a', address, '-i', str(id)])
+                        PROCESSES.append(p)
+                        CAMERA_OPENED[camera] = True
+                        LOCK.release()
             # General messages:
             elif code == PICommunication.MessageCode.DISCONNECT:
                 client_tcp_stream.send_by_size(PICommunication.disconnect("User exited"))
