@@ -8,7 +8,8 @@ END_PIN_INDEX = 27
 
 class PinType(Enum):
     EN = 1,
-    IN = 2
+    IN = 2,
+    PWM = 3
 
 class InPinState(Enum):
     LOW=1,

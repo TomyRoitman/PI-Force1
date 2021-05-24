@@ -8,15 +8,19 @@ GPIO_PIN_DISTRIBUTION_PATH="gpio_pin_distribution.json"
 
 class Car():
 
-    def __init__(self):
+    def __init__(self, vertical_change_value, horizontal_change_value):
         
         self.machine = PIMachine()
+
+        self.vertical_change_value = vertical_change_value
+        self.horizontal_change_value = horizontal_change_value
 
         self.__load_gpio_distribution()
 
         self.lock = threading.Lock()
         # self.controllers = {}
         self.wheel_DC_motors = {}
+        self.gyroscope_servo_motors = {}
         # self.__initialize_wheel_controllers()
         self.__initialize_wheel_DC_motors()
         self.__initialize_servo_motors()
@@ -69,6 +73,17 @@ class Car():
                 if "right" in wheel_motor_name:
                     wheel_motor_object.go_forward()
 
+    def camera_right(self):
+        self.gyroscope_servo_motors["vertical"].change_degree(-1 * self.vertical_change_value)
+    def camera_left(self):
+        self.gyroscope_servo_motors["vertical"].change_degree(self.vertical_change_value)
+    def camera_up(self):
+        self.gyroscope_servo_motors["horizontal"].change_degree(self.horizontal_change_value)
+    def camera_down(self):
+        self.gyroscope_servo_motors["horizontal"].change_degree(-1 * self.horizontal_change_value)
+    def reset_camera(self):
+        for name, motor in self.gyroscope_servo_motors.items():
+            motor.reset()
 
     def __initialize_wheel_controllers(self):
         DC_controllers = self.pin_distribution["DCControllers"]
@@ -94,11 +109,18 @@ class Car():
 #print(DC_controllers)
     
     def __initialize_servo_motors(self):
-            pass
-
+        gyroscope_servo_motors_dict = self.pin_distribution["GyroscopeServoMotors"]
+        print("1", gyroscope_servo_motors_dict)
+        for motor_name, pins in gyroscope_servo_motors_dict.items():
+            self.gyroscope_servo_motors[motor_name] = ServoMotor(motor_name, self.machine, [pins["in"],], 90)
 
     def __load_gpio_distribution(self):
         self.pin_distribution = json.load(open(GPIO_PIN_DISTRIBUTION_PATH))
+
+
+class Camera:
+
+    def __init__(self):
 
 
 def main():

@@ -1,5 +1,7 @@
-from hardware import Component, PIMachine, InPinState
 from enum import Enum
+
+from hardware import Component, PIMachine, InPinState
+
 
 class Direction(Enum):
     Forward = 1,
@@ -21,12 +23,20 @@ class ServoMotor(Component):
         self.gpio_pins = gpio_pins
         super().__init__(self.name, self.machine, gpio_pins)
         self.degree= degree
-
+        self.initial_degree = self.degree
+        self.gpio_pins[0]
     def change_degree(self, degree: float):
         """
         TODO: Change degree
         """
-        self.degree = degree
+        self.degree += degree
+        self.__set_degree(self.degree)
+
+    def reset(self):
+        self.__set_degree(self.initial_degree)
+
+    def __set_degree(self, degree: float):
+        pass
 
 class DCMotorController(Component):
 

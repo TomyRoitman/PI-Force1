@@ -24,5 +24,13 @@
                 "in2": 13
             }
         }
+    },
+    "GyroscopeServoMotors": {
+        "horizontal": {
+            "in": 3
+        },
+        "vertical": {
+            "in": 2
+        }
     }
 }

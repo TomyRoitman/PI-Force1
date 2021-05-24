@@ -52,6 +52,7 @@ def main():
     client_tcp_stream = TCPStream(client_socket, 1024, 4, 8, 1024)
 
     car = Car()
+
     while RUNNING:
         content_length, content = client_tcp_stream.recv_by_size()
         code, message = PICommunication.parse_message(content)
