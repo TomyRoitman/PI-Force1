@@ -1,12 +1,14 @@
 import json
 import socket
+import sys
 import threading
 import time
-from enum import Enum
 
 import cv2
+import numpy as np
+import pygame
 
-from gui import Gui
+from gui import Gui, Commands
 from image_processing.distance import DistanceCalculator2
 from image_processing.object_detection import ObjectDetector
 from image_processing.stereo import StereoDepthMap
@@ -49,6 +51,8 @@ RUNNING = True
 THREADS = []
 FRAME_QUEUE = []
 DEPTH_MAP_QUEUE = []
+BACKGROUND_COLOR = (255, 255, 255)
+SCREEN_DIMENSIONS = [1600, 800]
 
 
 def initialize_receivers(constants):
@@ -76,12 +80,22 @@ def create_depth_map():
         LOCK.release()
         if ret:
             depth_map = depth_map_obj.get_depth_image(left_frame, right_frame)
-            cv2.imshow("Depth Map", depth_map)
+            # cv2.imshow("Depth Map", depth_map)
             DEPTH_MAP_QUEUE.append(depth_map)
         cv2.waitKey(1)
         time.sleep(1.0 / 24)
 
-def handle_stream(constants):
+
+def blit_frame(screen, frame, size, position):
+    frame_blit = cv2.resize(frame, size)
+    frame_blit = cv2.flip(frame_blit, 1)  # flip horizontal
+    frame_blit = cv2.cvtColor(frame_blit, cv2.COLOR_BGR2RGB)
+    frame_blit = np.rot90(frame_blit)
+    surface = pygame.surfarray.make_surface(frame_blit)
+    screen.blit(surface, position)
+
+
+def handle_stream(constants, screen):
     global THREADS
 
     depth_map_thread = threading.Thread(target=create_depth_map)
@@ -94,18 +108,24 @@ def handle_stream(constants):
     detector = ObjectDetector("image_processing/", CONFIDENCE)
     left_results = []
     right_results = []
+    # screen.fill(BACKGROUND_COLOR)
     while RUNNING:
+
         current_frames = []
         if receiver1.frame_queue:
             left_ret = True
+            LOCK.acquire()
             left_frame = receiver1.frame_queue.pop(0)
+            LOCK.release()
             current_frames.append(left_frame)
             frame, left_results = detector.detect(left_frame)
-            h, w = frame.shape[:2]
-            cv2.line(frame, (0, int(h / 2) - 2), (w - 1, int(h / 2) - 2), (0, 0, 0), 2)
-            cv2.line(frame, (int(w / 2) - 2, 0), (int(w / 2) - 2, h - 1), (0, 0, 0), 2)
 
-            cv2.imshow("Receiver1", left_frame)
+            # h, w = frame.shape[:2]
+            # cv2.line(frame, (0, int(h / 2) - 2), (w - 1, int(h / 2) - 2), (0, 0, 0), 2)
+            # cv2.line(frame, (int(w / 2) - 2, 0), (int(w / 2) - 2, h - 1), (0, 0, 0), 2)
+
+            blit_frame(screen, left_frame, (640, 480), (SCREEN_DIMENSIONS[0] / 2, 50))
+
         else:
             left_ret = False
 
@@ -114,11 +134,13 @@ def handle_stream(constants):
             right_frame = receiver2.frame_queue.pop(0)
             current_frames.append(right_frame)
             frame, right_results = detector.detect(right_frame)
-            h, w = frame.shape[:2]
-            cv2.line(frame, (0, int(h / 2) - 2), (w - 1, int(h / 2) - 2), (0, 0, 0), 2)
-            cv2.line(frame, (int(w / 2) - 2, 0), (int(w / 2) - 2, h - 1), (0, 0, 0), 2)
 
-            cv2.imshow("Receiver2", right_frame)
+            # h, w = frame.shape[:2]
+            # cv2.line(frame, (0, int(h / 2) - 2), (w - 1, int(h / 2) - 2), (0, 0, 0), 2)
+            # cv2.line(frame, (int(w / 2) - 2, 0), (int(w / 2) - 2, h - 1), (0, 0, 0), 2)
+            size = (640, 480)
+            blit_frame(screen, frame, size, (SCREEN_DIMENSIONS[0] / 2 - size[0], 50))
+
         else:
             right_ret = False
 
@@ -127,48 +149,39 @@ def handle_stream(constants):
             FRAME_QUEUE.append(current_frames)
             if DEPTH_MAP_QUEUE:
                 depth_map = DEPTH_MAP_QUEUE.pop(0)
-                # cv2.imshow("Depth map", depth_map)
+                size = (300, 225)
+                blit_frame(screen, depth_map, size, ((SCREEN_DIMENSIONS[0] - size[0]) / 2, 550))
             LOCK.release()
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-        # if cv2.waitKey(1) & 0xFF == ord('c'):
+
         left_results = list(filter(lambda a: "person" in a.label, left_results))
         right_results = list(filter(lambda a: "person" in a.label, right_results))
-        if not (left_results and right_results):
-            continue
+        if left_results and right_results:
+            l_result = left_results[0]
+            r_result = right_results[0]
+            l_x = (l_result.location[0] + l_result.location[2]) / 2.0
+            r_x = (r_result.location[0] + r_result.location[2]) / 2.0
+            print("Distance from person: ", distance_calculator.calculate_distance(l_x, r_x))
 
-        l_result = left_results[0]
-        r_result = right_results[0]
-        l_x = (l_result.location[0] + l_result.location[2]) / 2.0
-        r_x = (r_result.location[0] + r_result.location[2]) / 2.0
-        print("Distance from person: ", distance_calculator.calculate_distance(l_x, r_x))
-
-
-class Commands(Enum):
-    DISCONNECT = PICommunication.disconnect("Exit")  # = Disconnect
-    HIGH_SPEED = PICommunication.set_high_speed()  # = Set high speed
-    LOW_SPEED = PICommunication.set_low_speed()  # = Set low speed
-    MEDIUM_SPEED = PICommunication.set_medium_speed()  # = Set medium speed
-    MOVE_FORWARD = PICommunication.move_forward()  # = Move forward
-    MOVE_BACKWARDS = PICommunication.move_backwards()  # = Move backwards
-    TURN_LEFT =  PICommunication.turn_left()  # = Turn left
-    TURN_RIGHT = PICommunication.turn_right()  # = Turn right
-    CAMERA_LEFT = PICommunication.move_camera_right()
-    CAMERA_RIGHT = PICommunication.move_camera_left()
-    CAMERA_UP = PICommunication.move_camera_up()
-    CAMERA_DOWN = PICommunication.move_camera_down()
-    TOGGLE_DEPTH_MAP = None
-    TOGGLE_OBJECT_DETECTION = None
-    TOGGLE_DISTANCE = None
-    RESET_CAMERA_POSITION = PICommunication.reset_camera_position()
+        # screen.blit(left_surface, (500, 0))
+        # screen.blit(right_surface, (0, 0))
+        pygame.display.flip()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or (event.type == pygame.JOYBUTTONDOWN and event.button == 7):
+                pygame.quit()
+                sys.exit()
+        # time.sleep(1.0 / 24)
 
 
 def main():
     global RUNNING
     global THREADS
+    gui_object = Gui()
+    screen = gui_object.screen
     constants = json.load(open(CONSTANTS_PATH))
-    show_stream_thread = threading.Thread(target=handle_stream, args=(constants,))
+    show_stream_thread = threading.Thread(target=handle_stream, args=(constants, screen))
     THREADS.append(show_stream_thread)
     show_stream_thread.start()
 
@@ -178,7 +191,8 @@ def main():
     except socket.error as e:
         raise socket.error("Could not connect to server. Failed with error:\n" + str(e))
 
-    gui_object = Gui()
+    # time.sleep(7.0)
+
     server_tcp_stream = TCPStream(server_socket, 1024, 4, 8, 1024)
 
     print("[Log] Sending: Request for camera initialization")
@@ -187,6 +201,8 @@ def main():
     print("Starting main loop")
     while RUNNING:
         commands = gui_object.get_events()
+        if commands:
+            print(commands)
         for command in commands:
             if command == Commands.TOGGLE_DEPTH_MAP:
                 pass
@@ -197,11 +213,14 @@ def main():
             elif command == Commands.DISCONNECT:
                 server_tcp_stream.send_by_size(PICommunication.disconnect("Exit"))
                 server_socket.close()
+                pygame.quit()
+                sys.exit()
                 break
             else:
                 server_tcp_stream.send_by_size(command.value)
         if not RUNNING:
             break
+        time.sleep(1.0 / 24)
     LOCK.acquire()
     RUNNING = False
     LOCK.release()
