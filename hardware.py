@@ -125,10 +125,9 @@ class Component:
         self.p.set_servo_pulsewidth(pin_num, angle)
         self.pin_classification[pin_num] = PinType.PWM
 
-    def update_pwm(self, pin_num, angle: float = 75):
+    def update_pwm(self, pin_num, angle: float = 500):
         if not PinType.PWM in self.pin_classification.values():
             raise ValueError(f"PWM pin is not registered!")
-
         # self.p.ChangeDutyCycle(pwm_value)
         self.p.set_servo_pulsewidth(pin_num, angle)
 

@@ -9,7 +9,7 @@ GPIO_PIN_DISTRIBUTION_PATH = "gpio_pin_distribution.json"
 
 class Car():
 
-    def __init__(self, vertical_change_value: float = 1, horizontal_change_value: float = 1):
+    def __init__(self, vertical_change_value: float = 3.0, horizontal_change_value: float = 3.0):
 
         self.machine = PIMachine()
 
@@ -79,10 +79,10 @@ class Car():
                     wheel_motor_object.go_forward()
 
     def move_camera_right(self):
-        self.gyroscope_servo_motors["vertical"].change_degree(-1 * self.vertical_change_value)
+        self.gyroscope_servo_motors["vertical"].change_degree(self.vertical_change_value)
 
     def move_camera_left(self):
-        self.gyroscope_servo_motors["vertical"].change_degree(self.vertical_change_value)
+        self.gyroscope_servo_motors["vertical"].change_degree(-1 * self.vertical_change_value)
 
     def move_camera_up(self):
         self.gyroscope_servo_motors["horizontal"].change_degree(self.horizontal_change_value)

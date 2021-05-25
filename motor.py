@@ -25,17 +25,20 @@ class ServoMotor(Component):
         self.machine = machine
         self.gpio_pins_dict = gpio_pins_dict
         super().__init__(self.name, self.machine, gpio_pins_dict.values())
-        self.degree = degree
+        self.degree = degree % 180.0
         self.initial_degree = self.degree
         # self.gpio_pins[0]
         print(gpio_pins_dict)
-        self.initialize_pins()
         self.servo_pin_number = -1
-    def change_degree(self, degree: float):
+        self.initialize_pins()
+        #self.servo_pin_number = -1
+    def change_degree(self, degree_change: float):
         """
         TODO: Change degree
         """
-        self.degree += degree
+        self.degree += degree_change
+        if self.degree < 0 or self. degree > 180.0:
+            self.degree = int(self.degree / 180.0) * 180.0
         self.__set_degree(self.degree)
 
     def reset(self):
