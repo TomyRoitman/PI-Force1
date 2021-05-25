@@ -9,7 +9,7 @@ GPIO_PIN_DISTRIBUTION_PATH = "gpio_pin_distribution.json"
 
 class Car():
 
-    def __init__(self, vertical_change_value, horizontal_change_value):
+    def __init__(self, vertical_change_value: float = 2, horizontal_change_value: float = 2):
 
         self.machine = PIMachine()
 
