@@ -119,7 +119,9 @@ class Component:
         """
         print("Initializing pwm pin", pin_num, angle)
         # self.initialize_en_pin(pin_num, self.servo_frequency, angle)
-        self.p = pigpio.pi()
+        #self.p.stop()
+        self.p = pigpio.pi('0.0.0.0', 8888)
+#        self.p.stop()
         self.p.set_mode(pin_num, pigpio.OUTPUT)
         self.p.set_PWM_frequency(pin_num, frequency)
         self.p.set_servo_pulsewidth(pin_num, angle)
