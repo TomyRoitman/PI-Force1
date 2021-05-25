@@ -27,10 +27,10 @@
     },
     "GyroscopeServoMotors": {
         "horizontal": {
-            "in": 3
+            "pwm": 3
         },
         "vertical": {
-            "in": 2
+            "pwm": 2
         }
     }
 }

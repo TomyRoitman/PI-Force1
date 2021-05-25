@@ -73,15 +73,15 @@ class Car():
                 if "right" in wheel_motor_name:
                     wheel_motor_object.go_forward()
 
-    def camera_right(self):
+    def move_camera_right(self):
         self.gyroscope_servo_motors["vertical"].change_degree(-1 * self.vertical_change_value)
-    def camera_left(self):
+    def move_camera_left(self):
         self.gyroscope_servo_motors["vertical"].change_degree(self.vertical_change_value)
-    def camera_up(self):
+    def move_camera_up(self):
         self.gyroscope_servo_motors["horizontal"].change_degree(self.horizontal_change_value)
-    def camera_down(self):
+    def move_camera_down(self):
         self.gyroscope_servo_motors["horizontal"].change_degree(-1 * self.horizontal_change_value)
-    def reset_camera(self):
+    def reset_camera_position(self):
         for name, motor in self.gyroscope_servo_motors.items():
             motor.reset()
 

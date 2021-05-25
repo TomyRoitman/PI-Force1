@@ -75,6 +75,16 @@ def main():
                 car.turn_right()
             elif code == PICommunication.MessageCode.TURN_LEFT:
                 car.turn_left()
+            elif code == PICommunication.MessageCode.CAMERA_RIGHT:
+                car.move_camera_right()
+            elif code == PICommunication.MessageCode.CAMERA_LEFT:
+                car.move_camera_left()
+            elif code == PICommunication.MessageCode.CAMERA_DOWN:
+                car.move_camera_down()
+            elif code == PICommunication.MessageCode.CAMERA_UP:
+                car.move_camera_up()
+            elif code == PICommunication.MessageCode.RESET_CAMERA_POSITION:
+                car.reset_camera_position()
 
             # Video stream control:
             elif code == PICommunication.MessageCode.INITIALIZE_CAMERAS:

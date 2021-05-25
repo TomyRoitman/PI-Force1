@@ -7,24 +7,28 @@ class Direction(Enum):
     Forward = 1,
     Backward = 2
 
+
 class Speed(Enum):
     Low = 1,
     High = 2
+
 
 class State(Enum):
     Rotate = 1,
     Stop = 2
 
+
 class ServoMotor(Component):
-    def __init__(self, id: str, machine: PIMachine, gpio_pins, degree:float=0):
+    def __init__(self, id: str, machine: PIMachine, gpio_pins_dict, degree: float = 90):
         self.id = id
         self.name = f"ServoMotor-{self.id}"
         self.machine = machine
-        self.gpio_pins = gpio_pins
-        super().__init__(self.name, self.machine, gpio_pins)
-        self.degree= degree
+        self.gpio_pins_dict = gpio_pins_dict
+        super().__init__(self.name, self.machine, gpio_pins_dict)
+        self.degree = degree
         self.initial_degree = self.degree
-        self.gpio_pins[0]
+        # self.gpio_pins[0]
+
     def change_degree(self, degree: float):
         """
         TODO: Change degree
@@ -35,8 +39,22 @@ class ServoMotor(Component):
     def reset(self):
         self.__set_degree(self.initial_degree)
 
-    def __set_degree(self, degree: float):
-        pass
+    def initialize_pins(self):
+        for pin_type, pin_number in self.gpio_pins_dict.items():
+            if pin_type == "pwm":
+                self.initialize_en_pin(pin_number)
+
+    def __set_degree(self, angle: float):
+        self.update_pwm(self.__convert_degrees_to_duty_cycle(angle))
+
+    def __convert_degrees_to_duty_cycle(self, angle: float):
+        """
+        Convert degrees to duty cycle values
+        :param angle: angle in degrees
+        :return:
+        """
+        return angle / 180.0 * 10 + 2.5
+
 
 class DCMotorController(Component):
 
@@ -53,14 +71,14 @@ class DCMotorController(Component):
             elif pin_type == "in":
                 self.initialize_in_pin(pin_number)
 
-class DCMotor(Component):
 
+class DCMotor(Component):
     speed_pwm = {
-	"LOW": 25, 
-	"MEDIUM": 50, 
-	"HIGH": 75, 
-	"MIN": 25, 
-	"MAX": 75 
+        "LOW": 25,
+        "MEDIUM": 50,
+        "HIGH": 75,
+        "MIN": 25,
+        "MAX": 75
     }
 
     def __init__(self, name: str, machine: PIMachine, gpio_pins_dict):
@@ -72,18 +90,17 @@ class DCMotor(Component):
         self.direction = Direction.Forward
         self.speed = Speed.Low
         self.state = State.Stop
-        #print(self.gpio_pins)
+        # print(self.gpio_pins)
         self.initialize_pins()
 
-
-    def go_forward(self, direction: Direction=Direction.Forward, speed: Speed=Speed.Low):
+    def go_forward(self, direction: Direction = Direction.Forward, speed: Speed = Speed.Low):
         self.state = State.Rotate
         self.direction = Direction
         self.speed = speed
         self.update_in_pin(self.gpio_pins_dict["in1"], InPinState.HIGH)
         self.update_in_pin(self.gpio_pins_dict["in2"], InPinState.LOW)
-    
-    def go_backwards(self, direction: Direction=Direction.Forward, speed: Speed=Speed.Low):
+
+    def go_backwards(self, direction: Direction = Direction.Forward, speed: Speed = Speed.Low):
         self.state = State.Rotate
         self.direction = Direction
         self.speed = speed
@@ -92,14 +109,14 @@ class DCMotor(Component):
 
     def stop(self):
         self.state = State.Rotate
-        #self.direction = Direction
-        #self.speed = speed
+        # self.direction = Direction
+        # self.speed = speed
         self.update_in_pin(self.gpio_pins_dict["in1"], InPinState.HIGH)
         self.update_in_pin(self.gpio_pins_dict["in2"], InPinState.HIGH)
 
     def low_speed(self):
         self.update_pwm(self.gpio_pins_dict["en"], 25)
-    
+
     def medium_speed(self):
         self.update_pwm(self.gpio_pins_dict["en"], 50)
 
@@ -108,13 +125,10 @@ class DCMotor(Component):
 
     def initialize_pins(self):
         for pin_type, pin_number in self.gpio_pins_dict.items():
-            if  "en" in pin_type:
+            if "en" in pin_type:
                 self.initialize_en_pin(pin_number)
             elif "in" in pin_type:
                 self.initialize_in_pin(pin_number)
 
-
-    #def stop(self):
-        #self.state = State.Stop
-
-    
+    # def stop(self):
+    # self.state = State.Stop
