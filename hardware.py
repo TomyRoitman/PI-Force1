@@ -2,6 +2,7 @@ import threading
 from enum import Enum
 
 import RPi.GPIO as GPIO
+import pigpio as pigpio
 
 START_PIN_INDEX = 2
 END_PIN_INDEX = 27
@@ -90,7 +91,7 @@ class Component:
         self.p = None
         if not self.__acquire_pins():
             raise ValueError("Pins already taken")
-        #self.pin_classification = {}
+        # self.pin_classification = {}
 
     def __acquire_pins(self):
         return self.machine.acquire_pins(self.name, *self.gpio_pins) if self.gpio_pins else False
@@ -107,24 +108,33 @@ class Component:
         GPIO.output(pin_num, GPIO.LOW)
         self.pin_classification[pin_num] = PinType.IN
 
-    def initialize_pwm_pin(self, pin_num, angle):
+    def initialize_pwm_pin(self, pin_num, angle, frequency: float = 50):
         """
         Initialize as pwm then handle as en
+        :param frequency:
+        :param duty_cycle:
         :param angle: Initial motor angle
         :param pin_num: PWM pin number
         :return:
         """
         print("Initializing pwm pin", pin_num, angle)
-        self.initialize_en_pin(pin_num, self.servo_frequency, angle)
+        # self.initialize_en_pin(pin_num, self.servo_frequency, angle)
+        self.p = pigpio.pi()
+        self.p.set_mode(pin_num, pigpio.OUTPUT)
+        self.p.set_PWM_frequency(pin_num, frequency)
+        self.p.set_servo_pulsewidth(pin_num, angle)
+        self.pin_classification[pin_num] = PinType.PWM
 
-    def update_pwm(self, pwm_value):
-        print(pwm_value, self.pin_classification)
-        if not PinType.EN in self.pin_classification.values():
-            raise ValueError(f"PWM/En pin is not registered!")
-        self.p.ChangeDutyCycle(pwm_value)
+    def update_pwm(self, pin_num, angle: float = 75):
+        if not PinType.PWM in self.pin_classification.values():
+            raise ValueError(f"PWM pin is not registered!")
 
-    def stop_pwm(self):
-        self.p.stop()
+        # self.p.ChangeDutyCycle(pwm_value)
+        self.p.set_servo_pulsewidth(pin_num, angle)
+
+    def stop_pwm(self, pin_num):
+        self.p.set_PWM_dutycycle(pin_num, 0)
+        self.p.set_PWM_frequency(pin_num, 0)
 
     def update_in_pin(self, pin_num, pin_state: InPinState):
         if pin_num not in self.pin_classification.keys():

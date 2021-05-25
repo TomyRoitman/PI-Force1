@@ -3,15 +3,11 @@ import threading
 import time
 from subprocess import Popen
 
-import cv2
-
 from car import Car
-from image_processing.object_detection import ObjectDetector
 from network.communication import TCPStream
 # from network.communication import TCPServer
 from network.protocol import PICommunication
 from network.socket_utils import initialize_server
-from network.streamer import Streamer
 
 CAMERA_OPENED = {'left': False, 'right': False}
 CAMERAS = {}
@@ -38,12 +34,11 @@ THREADS = []
 PROCESSES = []
 
 
-
 def main():
     global RUNNING
     global PROCESSES
     global THREADS
-    global CAMERA_USEDc
+    global CAMERA_USED
     # detector = ObjectDetector("image_processing/", CONFIDENCE)
 
     constants = json.load(open(CONSTANTS_PATH))

@@ -30,7 +30,7 @@ class ServoMotor(Component):
         # self.gpio_pins[0]
         print(gpio_pins_dict)
         self.initialize_pins()
-
+        self.servo_pin_number = -1
     def change_degree(self, degree: float):
         """
         TODO: Change degree
@@ -45,10 +45,11 @@ class ServoMotor(Component):
         print("Initializing pins: ", self.gpio_pins_dict)
         for pin_type, pin_number in self.gpio_pins_dict.items():
             if pin_type == "pwm":
-                self.initialize_pwm_pin(pin_number, self.initial_degree)
+                self.initialize_pwm_pin(pin_number, self.__convert_degrees_to_duty_cycle(self.initial_degree))
+                self.servo_pin_number = pin_number
 
     def __set_degree(self, angle: float):
-        self.update_pwm(self.__convert_degrees_to_duty_cycle(angle))
+        self.update_pwm(self.servo_pin_number, self.__convert_degrees_to_duty_cycle(angle))
 
     def __convert_degrees_to_duty_cycle(self, angle: float):
         """
@@ -56,7 +57,7 @@ class ServoMotor(Component):
         :param angle: angle in degrees
         :return:
         """
-        return angle / 180.0 * 10 + 2.5
+        return angle / 180.0 * 2000 + 500
 
 
 class DCMotorController(Component):
