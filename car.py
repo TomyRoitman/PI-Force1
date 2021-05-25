@@ -9,7 +9,7 @@ GPIO_PIN_DISTRIBUTION_PATH = "gpio_pin_distribution.json"
 
 class Car():
 
-    def __init__(self, vertical_change_value: float = 2, horizontal_change_value: float = 2):
+    def __init__(self, vertical_change_value: float = 1, horizontal_change_value: float = 1):
 
         self.machine = PIMachine()
 
@@ -119,10 +119,12 @@ class Car():
             # print(DC_controllers)
 
     def __initialize_servo_motors(self):
+        print("\n\n\n\---- initializing servo motors ----\n\n\n")
         gyroscope_servo_motors_dict = self.pin_distribution["GyroscopeServoMotors"]
-        print("1", gyroscope_servo_motors_dict)
+        print("\n\n\n1", gyroscope_servo_motors_dict)
         for motor_name, pins in gyroscope_servo_motors_dict.items():
-            self.gyroscope_servo_motors[motor_name] = ServoMotor(motor_name, self.machine, [pins["pwm"], ], 90)
+            print("Servo motor info: ", motor_name, pins)
+            self.gyroscope_servo_motors[motor_name] = ServoMotor(motor_name, self.machine, pins, 90)
 
     def __load_gpio_distribution(self):
         self.pin_distribution = json.load(open(GPIO_PIN_DISTRIBUTION_PATH))

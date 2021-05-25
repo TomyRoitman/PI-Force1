@@ -24,10 +24,12 @@ class ServoMotor(Component):
         self.name = f"ServoMotor-{self.id}"
         self.machine = machine
         self.gpio_pins_dict = gpio_pins_dict
-        super().__init__(self.name, self.machine, gpio_pins_dict)
+        super().__init__(self.name, self.machine, gpio_pins_dict.values())
         self.degree = degree
         self.initial_degree = self.degree
         # self.gpio_pins[0]
+        print(gpio_pins_dict)
+        self.initialize_pins()
 
     def change_degree(self, degree: float):
         """
@@ -40,9 +42,10 @@ class ServoMotor(Component):
         self.__set_degree(self.initial_degree)
 
     def initialize_pins(self):
+        print("Initializing pins: ", self.gpio_pins_dict)
         for pin_type, pin_number in self.gpio_pins_dict.items():
             if pin_type == "pwm":
-                self.initialize_en_pin(pin_number)
+                self.initialize_pwm_pin(pin_number, self.initial_degree)
 
     def __set_degree(self, angle: float):
         self.update_pwm(self.__convert_degrees_to_duty_cycle(angle))
@@ -63,6 +66,7 @@ class DCMotorController(Component):
         self.machine = machine
         self.gpio_pins_dict = gpio_pins_dict
         super().__init__(self.name, self.machine, gpio_pins_dict.values())
+        self.initialize_pins()
 
     def initialize_pins(self):
         for pin_type, pin_number in self.gpio_pins_dict.items():

@@ -110,6 +110,7 @@ def main():
             else:
                 print(f"Command code: {code}\n")
                 client_tcp_stream.send_by_size(PICommunication.error("Unknown command"))
+            time.sleep(1.0 / 10)
         except Exception as e:
             print(e)
 

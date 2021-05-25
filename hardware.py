@@ -82,6 +82,7 @@ class PIMachine:
 class Component:
 
     def __init__(self, name: str, machine: PIMachine, gpio_pins=None, servo_frequency=50):
+        self.pin_classification = {}
         self.name = name
         self.machine = machine
         self.gpio_pins = gpio_pins
@@ -89,15 +90,16 @@ class Component:
         self.p = None
         if not self.__acquire_pins():
             raise ValueError("Pins already taken")
-        self.pin_classification = {}
+        #self.pin_classification = {}
 
     def __acquire_pins(self):
         return self.machine.acquire_pins(self.name, *self.gpio_pins) if self.gpio_pins else False
 
-    def initialize_en_pin(self, pin_num, frequency: float = 1000, duty_cicle: int = 75):
+    def initialize_en_pin(self, pin_num, frequency: float = 1000, duty_cycle: int = 75):
+        print("Initializing EN pin", pin_num, frequency, duty_cycle)
         GPIO.setup(pin_num, GPIO.OUT)
         self.p = GPIO.PWM(pin_num, frequency)
-        self.p.start(duty_cicle)
+        self.p.start(duty_cycle)
         self.pin_classification[pin_num] = PinType.EN
 
     def initialize_in_pin(self, pin_num):
@@ -112,9 +114,11 @@ class Component:
         :param pin_num: PWM pin number
         :return:
         """
+        print("Initializing pwm pin", pin_num, angle)
         self.initialize_en_pin(pin_num, self.servo_frequency, angle)
 
     def update_pwm(self, pwm_value):
+        print(pwm_value, self.pin_classification)
         if not PinType.EN in self.pin_classification.values():
             raise ValueError(f"PWM/En pin is not registered!")
         self.p.ChangeDutyCycle(pwm_value)
