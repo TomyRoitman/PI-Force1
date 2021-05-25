@@ -46,12 +46,17 @@ class DistanceCalculator2:
         angle_r = math.radians(90 - math.degrees(math.atan((self.Hr / 2 - x_r) / self.d_r)))
         tan_r = math.tan(angle_r)
 
-        if x_r > self.Hr / 2:
-            return (self.l * tan_l * math.tan(math.pi - angle_r)) / (math.tan(math.pi - angle_r) - tan_l)
-        elif x_l < self.Hl / 2:
-            return (self.l * tan_r * math.tan(math.pi - angle_l)) / (math.tan(math.pi - angle_l) - tan_r)
-        else:
-            return (self.l * tan_l * tan_r) / (tan_l + tan_r)
+        to_return = -1
+        try:
+            if x_r > self.Hr / 2:
+                to_return = (self.l * tan_l * math.tan(math.pi - angle_r)) / (math.tan(math.pi - angle_r) - tan_l)
+            elif x_l < self.Hl / 2:
+                to_return = (self.l * tan_r * math.tan(math.pi - angle_l)) / (math.tan(math.pi - angle_l) - tan_r)
+            else:
+                to_return = (self.l * tan_l * tan_r) / (tan_l + tan_r)
+                return -1
+        except:
+            return to_return
 
     def sinus(self, angle):
         return math.sin(angle / 180 * math.pi)

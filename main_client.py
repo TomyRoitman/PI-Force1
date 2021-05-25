@@ -74,7 +74,9 @@ def create_depth_map():
     while RUNNING:
         ret = False
         LOCK.acquire()
-        if FRAME_QUEUE:
+        if len(FRAME_QUEUE) > 2:
+            not_used = FRAME_QUEUE.pop(0)
+            # not_used2 = FRAME_QUEUE.pop(0)
             left_frame, right_frame = FRAME_QUEUE.pop(0)
             ret = True
         LOCK.release()
@@ -83,12 +85,13 @@ def create_depth_map():
             # cv2.imshow("Depth Map", depth_map)
             DEPTH_MAP_QUEUE.append(depth_map)
         cv2.waitKey(1)
-        time.sleep(1.0 / 24)
+        time.sleep(1.0 / 40)
+    sys.exit()
 
 
 def blit_frame(screen, frame, size, position):
     frame_blit = cv2.resize(frame, size)
-    frame_blit = cv2.flip(frame_blit, 1)  # flip horizontal
+    # frame_blit = cv2.flip(frame_blit, 1)  # flip horizontal
     frame_blit = cv2.cvtColor(frame_blit, cv2.COLOR_BGR2RGB)
     frame_blit = np.rot90(frame_blit)
     surface = pygame.surfarray.make_surface(frame_blit)
