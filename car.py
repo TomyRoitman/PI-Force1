@@ -122,7 +122,7 @@ class Car():
         gyroscope_servo_motors_dict = self.pin_distribution["GyroscopeServoMotors"]
         print("1", gyroscope_servo_motors_dict)
         for motor_name, pins in gyroscope_servo_motors_dict.items():
-            self.gyroscope_servo_motors[motor_name] = ServoMotor(motor_name, self.machine, [pins["in"], ], 90)
+            self.gyroscope_servo_motors[motor_name] = ServoMotor(motor_name, self.machine, [pins["pwm"], ], 90)
 
     def __load_gpio_distribution(self):
         self.pin_distribution = json.load(open(GPIO_PIN_DISTRIBUTION_PATH))
