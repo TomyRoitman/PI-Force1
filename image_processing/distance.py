@@ -54,7 +54,7 @@ class DistanceCalculator2:
                 to_return = (self.l * tan_r * math.tan(math.pi - angle_l)) / (math.tan(math.pi - angle_l) - tan_r)
             else:
                 to_return = (self.l * tan_l * tan_r) / (tan_l + tan_r)
-                return -1
+            return to_return
         except:
             return to_return
 

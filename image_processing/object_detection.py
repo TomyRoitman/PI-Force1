@@ -3,8 +3,10 @@ import numpy as np
 
 
 class DetectionResult:
-    def __init__(self, label, confidence, location):
+    def __init__(self, label, color, obj_type, confidence, location):
         self.label = label
+        self.color = color
+        self.obj_type = obj_type
         self.confidence = confidence
         self.location = location
 
@@ -52,14 +54,15 @@ class ObjectDetector:
                 idx = int(detections[0, 0, i, 1])
                 box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
                 coordinates = box.astype("int")
-                (startX, startY, endX, endY) = coordinates
-                # draw the prediction on the frame
+                # (startX, startY, endX, endY) = coordinates
+                # # draw the prediction on the frame
+                obj_type = ObjectDetector.CLASSES[idx]
                 label = "{}: {:.2f}%".format(ObjectDetector.CLASSES[idx], confidence * 100)
-                cv2.rectangle(frame, (startX, startY), (endX, endY), ObjectDetector.COLORS[idx], 2)
-                y = startY - 15 if startY - 15 > 15 else startY + 15
-                cv2.putText(frame, label, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, ObjectDetector.COLORS[idx], 2)
-
-                results.append(DetectionResult(label, confidence, coordinates))
+                # cv2.rectangle(frame, (startX, startY), (endX, endY), ObjectDetector.COLORS[idx], 2)
+                # y = startY - 15 if startY - 15 > 15 else startY + 15
+                # cv2.putText(frame, label, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, ObjectDetector.COLORS[idx], 2)
+                color = ObjectDetector.COLORS[idx]
+                results.append(DetectionResult(label, color, obj_type, confidence, coordinates))
         return frame, results
 
 
