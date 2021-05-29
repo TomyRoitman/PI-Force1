@@ -61,6 +61,7 @@ class TCPStream:
         cipher = PKCS1_OAEP.new(key)
         data_length, data = self.recv_by_size()
         aes_key = cipher.decrypt(data)
+        print(aes_key)
         self.aes_cipher = AESCipher(aes_key)
 
     def recv_by_size(self):
@@ -78,6 +79,7 @@ class TCPStream:
             content += self.sock.recv(content_length - len(content))
 
         if self.aes_cipher is not None:
+            print(len(content), content)
             self.aes_cipher.decrypt(content)
         return content_length, content
 
