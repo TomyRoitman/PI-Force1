@@ -33,7 +33,9 @@ class PinSlot:
 
     def __init__(self, acquired: bool = False, component_name: str = None):
         """
-        Initialize PinSlot
+        Initalize PinSlot object
+        :param acquired: Is the pin acquired
+        :param component_name:
         """
         self.acquired = acquired
         self.component_name = component_name
