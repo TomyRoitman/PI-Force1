@@ -7,7 +7,7 @@ from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
 from Crypto import Random
 from network.aes_utils import AESCipher
-RSA_KEY_SIZE = 64
+RSA_KEY_SIZE = 128
 
 class TCPStream:
     """
