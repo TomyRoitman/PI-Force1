@@ -79,8 +79,7 @@ class TCPStream:
             content += self.sock.recv(content_length - len(content))
 
         if self.aes_cipher is not None:
-            print(len(content), content)
-            self.aes_cipher.decrypt(content)
+            content = self.aes_cipher.decrypt(content)
         return content_length, content
 
     def recv_by_size_with_timeout(self, interval):

@@ -25,8 +25,10 @@ class AESCipher(object):
         iv = enc[:AES.block_size]
         print(len(enc), len(iv))
         cipher = AES.new(self.key, AES.MODE_CBC, iv)
-        print(cipher.decrypt(enc[AES.block_size:]))
-        return self._unpad(cipher.decrypt(enc[AES.block_size:]))
+        
+        a = cipher.decrypt(enc[AES.block_size:])
+        print(a)
+        return self._unpad(a)
 
     def _pad(self, s):
         print(chr(self.bs - len(s) % self.bs).encode())
@@ -34,5 +36,7 @@ class AESCipher(object):
 
     @staticmethod
     def _unpad(s):
-        print(s[len(s) - 1:])
-        return s[:-ord(s[len(s) - 1:].decode())]
+        print("Unpadding: ", s)
+        padding_size = int(s[-1])
+        print("p_size: ", padding_size)
+        return s[: len(s) - padding_size]
