@@ -50,7 +50,7 @@ class TCPStream:
         self.send_by_size(aes_key_ciphered)
         self.aes_cipher = AESCipher(aes_key)
 
-    def generate_aes_key_from_server_side(self, client_tcp_stream):
+    def generate_aes_key_from_server_side(self):
         """
         Generate aes key with RSA from server side
         Creates AESCipher object for aes encryption.
