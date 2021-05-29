@@ -104,7 +104,7 @@ def main():
             # General messages:
             elif code == PICommunication.MessageCode.DISCONNECT:
                 client_tcp_stream.send_by_size(PICommunication.disconnect("User exited"))
-                client_socket.close()
+                client_tcp_stream.sock.close()
                 break
             else:
                 print(f"Command code: {code}\n")
