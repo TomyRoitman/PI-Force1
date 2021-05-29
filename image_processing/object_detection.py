@@ -3,7 +3,19 @@ import numpy as np
 
 
 class DetectionResult:
+    """
+    Represents a detection result.
+    """
+
     def __init__(self, label, color, obj_type, confidence, location):
+        """
+        Stores information about an object detection.
+        :param label: Detection label to be printed on the screen
+        :param color: Rectangular and text color
+        :param obj_type: What is the type of the object that was detected.
+        :param confidence: What id the confidence of the detection
+        :param location: Object location in the screen
+        """
         self.label = label
         self.color = color
         self.obj_type = obj_type
@@ -19,15 +31,29 @@ class ObjectDetector:
     COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
 
     def __init__(self, data_path, confidence):
+        """
+        :param data_path: Where is the pretrained CNN located.
+        :param confidence: What is the minimum confidence needed to approve a detection.
+        model: Pretrained model to detect objects.
+        Classes: List of possible detections.
+    	Colors: Containing a color for each possible detection type.
+        """
         self.prototxt = data_path + "/" + "MobileNetSSD_deploy.prototxt.txt"
         self.model = data_path + "/" + "MobileNetSSD_deploy.caffemodel"
         self.model = self.load_model()
         self.confidence = confidence
 
     def load_model(self):
+        """
+        :return: Pretrained model loaded from file.
+        """
         return cv2.dnn.readNetFromCaffe(self.prototxt, self.model)
 
     def detect(self, base_frame):
+        """
+        :param base_frame: Frame to run detector on
+        :return: List of object detections
+        """
         # grab the frame dimensions and convert it to a blob
         frame = base_frame
         (h, w) = frame.shape[:2]

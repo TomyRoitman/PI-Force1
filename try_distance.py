@@ -51,6 +51,12 @@ class Frame_Angles:
     # ------------------------------
 
     def __init__(self, pixel_width=None, pixel_height=None, angle_width=None, angle_height=None):
+        """
+        :param pixel_width:
+        :param pixel_height:
+        :param angle_width:
+        :param angle_height:
+        """
 
         # full frame dimensions in pixels
         if type(pixel_width) in (int, float):
@@ -68,7 +74,9 @@ class Frame_Angles:
         self.build_frame()
 
     def build_frame(self):
-
+        """
+        Sets all the variables used for the calculation.
+        """
         # this assumes correct values for pixel_width, pixel_height, and angle_width
 
         # fix angle height
@@ -90,15 +98,22 @@ class Frame_Angles:
     # ------------------------------
 
     def angles(self, x, y):
-
+        """
+        :param x: Object x position
+        :param y: Object y position
+        :return: Return angles of object in x and y axes.
+        """
         return self.angles_from_center(x, y)
 
     def angles_from_center(self, x, y, top_left=True, degrees=True):
+        """
 
-        # x = pixels right from left edge of frame
-        # y = pixels down from top edge of frame
-        # if not top_left, assume x,y are from frame center
-        # if not degrees, return radians
+        :param x: pixels right from left edge of frame
+        :param y: pixels down from top edge of frame
+        :param top_left: if False: assume x,y are from frame center
+        :param degrees: if False, return radians
+        :return:
+        """
 
         if top_left:
             x = x - self.x_origin
@@ -116,12 +131,12 @@ class Frame_Angles:
         return math.degrees(xrad), math.degrees(yrad)
 
     def pixels_from_center(self, x, y, degrees=True):
-
-        # this is the reverse of angles_from_center
-
-        # x = horizontal angle from center
-        # y = vertical angle from center
-        # if not degrees, angles are radians
+        """
+        :param x: horizontal angle from center
+        :param y: vertical angle from center
+        :param degrees: if not degrees, angles are radians
+        :return: How many pixels if the object far away from the center
+        """
 
         if degrees:
             x = math.radians(x)
@@ -134,21 +149,30 @@ class Frame_Angles:
     # ------------------------------
 
     def distance(self, *coordinates):
+        """
+        :param coordinates:
+        :return: direct distance from object.
+        """
         return self.distance_from_origin(*coordinates)
 
     def distance_from_origin(self, *coordinates):
+        """
+        :param coordinates:
+        :return: direct distance from object.
+        """
         return math.sqrt(sum([x ** 2 for x in coordinates]))
 
     def intersection(self, pdistance, langle, rangle, degrees=False):
+        """
+        :param pdistance: the measure from left-camera-center to right-camera-center (point-to-point, or point distance)
+        :param langle: the left-camera angle to object measured from center frame (up/right positive)
+        :param rangle: the right-camera angle to object measured from center frame (up/right positive)
+        :param degrees: Whether to convert degrees to radians
+        :return: (X,Y) of target from left-camera-center
+        X is measured along the baseline from left-camera-center to right-camera-center
+        Y is measured from the baseline
+        """
 
-        # return (X,Y) of target from left-camera-center
-
-        # pdistance is the measure from left-camera-center to right-camera-center (point-to-point, or point distance)
-        # langle is the left-camera  angle to object measured from center frame (up/right positive)
-        # rangle is the right-camera angle to object measured from center frame (up/right positive)
-        # left-camera-center is origin (0,0) for return (X,Y)
-        # X is measured along the baseline from left-camera-center to right-camera-center
-        # Y is measured from the baseline
 
         # fix degrees
         if degrees:
@@ -226,12 +250,22 @@ class Frame_Angles:
 class DistanceCalculator3:
 
     def __init__(self):
+        """
+        angler: Object that allowa angle calculation.
+        """
         # cameras are the same, so only 1 needed
         pixel_width, pixel_height, angle_width, angle_height = 640, 480, 40, 40 * (480 / 640)
         self.angler = Frame_Angles(pixel_width, pixel_height, angle_width, angle_height)
         self.angler.build_frame()
 
     def calculate_distance(self, x1m, y1m, x2m, y2m):
+        """
+        :param x1m: x position of the middle of the object in the left frame.
+        :param y1m: y position of the middle of the object in the left frame.
+        :param x2m: x position of the middle of the object in the right frame.
+        :param y2m: y position of the middle of the object in the right frame.
+        :return: X, Y, Z, D in centimeters, representing the real physical distance between the cameras and the object.
+        """
         # get angles from camera centers
         xlangle, ylangle = self.angler.angles_from_center(x1m, y1m, top_left=False, degrees=True)
         xrangle, yrangle = self.angler.angles_from_center(x2m, y2m, top_left=False, degrees=True)

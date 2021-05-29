@@ -46,8 +46,9 @@ def main():
 
     constants = json.load(open(CONSTANTS_PATH))
     tcp_server = initialize_server(constants, "main_tcp_server", THREADS)
-    client_socket = tcp_server.get_client()
-    client_tcp_stream = TCPStream(client_socket, 1024, 4, 8, 1024)
+    # client_socket = tcp_server.get_client()
+    # client_tcp_stream = TCPStream(client_socket, 1024, 4, 8, 1024)
+    client_tcp_stream = tcp_server.get_client()
 
     car = Car()
 

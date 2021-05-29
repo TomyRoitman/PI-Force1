@@ -5,17 +5,32 @@ from image_processing.calibration.camera_calibration_store import load_stereo_co
 
 
 class StereoDepthMap:
+    """
+    Creates depth maps from input from a stereo cameras setup.
+    """
     def __init__(self, stereo_calibration_file):
+        """
+        Initialize a StereoDepthMap object.
+        :param stereo_calibration_file: Path to the file containing stereo_calibration information.
+        """
         self.stereo_calibration_file = stereo_calibration_file
         print("Loading stereo calibration")
         self.__load_stereo_calibration()
         print("Finished loading stereo calibration")
 
     def __load_stereo_calibration(self):
+        """
+        Load stereo_calibration information from file
+        """
         self.K1, self.D1, self.K2, self.D2, self.R, self.T, self.E, self.F, self.R1, self.R2, self.P1, self.P2, self.Q = load_stereo_coefficients(
             self.stereo_calibration_file)  # Get cams params
 
     def get_depth_image(self, left_frame, right_frame):
+        """
+        :param left_frame: numpy.ndarray, frame received from left camera.
+        :param right_frame: numpy.ndarray, frame received from right camera.
+        :return: numpy.ndarray: Image representing the depth map created from both frames.
+        """
         height, width, channel = left_frame.shape  # We will use the shape for remap
         # print(f"height {height}, width {width}, channel {channel}")
         # Undistortion and Rectification part!
@@ -32,8 +47,13 @@ class StereoDepthMap:
         return disparity_image
 
     def __create_depth_map(self, imgL, imgR):
-        """ Depth map calculation. Works with SGBM and WLS. Need rectified images, returns depth map ( left to right
-        disparity ) """
+        """
+        Depth map calculation. Works with SGBM and WLS. Need rectified images, returns depth map ( left to right
+        disparity )
+        Gets the frames after preprocessing.
+        :param imgL: left frame
+        :param imgR: right frame
+        """
         # SGBM Parameters -----------------
         window_size = 3  # wsize default 3; 5; 7 for SGBM reduced size image; 15 for SGBM full size image (1300px and
         # above); 5 Works nicely
