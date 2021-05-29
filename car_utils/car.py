@@ -1,8 +1,8 @@
 import json
 import threading
 
-from hardware import PIMachine
-from motor import DCMotorController, DCMotor, ServoMotor
+from car_utils.hardware import PIMachine
+from car_utils.motor import DCMotorController, DCMotor, ServoMotor
 
 GPIO_PIN_DISTRIBUTION_PATH = "gpio_pin_distribution.json"
 

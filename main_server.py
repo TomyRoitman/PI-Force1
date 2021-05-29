@@ -1,9 +1,8 @@
 import json
 import threading
-import time
 from subprocess import Popen
 
-from car import Car
+from car_utils.car import Car
 from network.communication import TCPStream
 # from network.communication import TCPServer
 from network.protocol import PICommunication

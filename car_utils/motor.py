@@ -1,6 +1,6 @@
 from enum import Enum
 
-from hardware import Component, PIMachine, InPinState
+from car_utils.hardware import Component, PIMachine, InPinState
 
 
 class Direction(Enum):

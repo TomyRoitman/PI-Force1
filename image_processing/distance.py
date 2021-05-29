@@ -80,18 +80,22 @@ def main():
 
 
 def main2():
-    distance_calculator = DistanceCalculator2()
+    distance_calculator = DistanceCalculator()
+    distance_calculator2 = DistanceCalculator2()
     left_location = [217, 32, 319, 356]
     l_start_x, l_start_y, l_end_x, l_end_y = left_location
     right_location = [62, 68, 174, 416]
     r_start_x, r_start_y, r_end_x, r_end_y = right_location
-    # left_middle_x = (l_start_x + l_end_x) / 2
-    left_middle_x = 640 - 153
-    # right_middle_x = (r_start_x + r_end_x) / 2
-    right_middle_x = 640 - 296
+    left_middle_x = (l_start_x + l_end_x) / 2
+    # left_middle_x = 640 - 153
+    right_middle_x = (r_start_x + r_end_x) / 2
+    # right_middle_x = 640 - 296
 
     dist = distance_calculator.calculate_distance(left_middle_x, right_middle_x)
-    print(dist)
+    print("1: ", dist)
+
+    dist2 = distance_calculator2.calculate_distance(left_middle_x, right_middle_x)
+    print("2: ", dist2)
 
 
 if __name__ == '__main__':

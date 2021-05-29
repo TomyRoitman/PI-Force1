@@ -17,6 +17,7 @@ from image_processing.stereo import StereoDepthMap
 from network.communication import TCPStream
 from network.protocol import PICommunication
 from network.stream_receiver import StreamReceiver
+from try_distance import DistanceCalculator3
 
 CUTOFF = 50
 CAMERA_MENU_TEXT = """
@@ -76,18 +77,17 @@ def create_depth_map():
     depth_map_obj = StereoDepthMap(STEREO_CALIBRATION_FILE)
     while RUNNING:
         ret = False
-        LOCK.acquire()
         if len(FRAME_QUEUE) > 2:
+            LOCK.acquire()
             not_used = FRAME_QUEUE.pop(0)
-            # not_used2 = FRAME_QUEUE.pop(0)
+            not_used2 = FRAME_QUEUE.pop(0)
             left_frame, right_frame = FRAME_QUEUE.pop(0)
             ret = True
-        LOCK.release()
+            LOCK.release()
         if ret:
             depth_map = depth_map_obj.get_depth_image(left_frame, right_frame)
-            # cv2.imshow("Depth Map", depth_map)
             DEPTH_MAP_QUEUE.append(depth_map)
-        cv2.waitKey(1)
+        # cv2.waitKey(1)
         time.sleep(1.0 / 60)
     sys.exit()
 
@@ -103,7 +103,6 @@ def blit_frame(screen, frame, size, position):
 
 
 def compare_images(frame0, frame1):
-
     try:
         im0 = cv2.cvtColor(frame0, cv2.COLOR_BGR2RGB)
         im0 = Image.fromarray(im0)
@@ -123,35 +122,51 @@ def get_object_from_detection_result(frame: np.ndarray, detection_result: Detect
 
 
 def find_object_pairs(left_frame, left_results, right_frame, right_results, distance_calculator: DistanceCalculator2):
-    right_obj_types = list(map(lambda result: result.obj_type, right_results))
+    left_results.sort(key=lambda obj: obj.obj_type)
+    right_results.sort(key=lambda obj: obj.obj_type)
+    # right_obj_types = [result.obj_type for result in right_results]
+    right_index = 0
     for left_obj in left_results:
-        if not left_obj.obj_type in right_obj_types:
-            continue
         for right_obj in right_results:
-            if left_obj.obj_type == right_obj.obj_type:
+            if left_obj.obj_type != right_obj.obj_type:
+                right_index = right_results.index(right_obj)
+                break
+            try:
                 left_cropped_obj = get_object_from_detection_result(left_frame, left_obj)
                 right_cropped_obj = get_object_from_detection_result(right_frame, right_obj)
-                if left_cropped_obj is None or right_cropped_obj is None:
-                    continue
+
                 if compare_images(left_cropped_obj, right_cropped_obj):
-                    l_x = (left_obj.location[0] + left_obj.location[2]) / 2.0
-                    r_x = (right_obj.location[0] + right_obj.location[2]) / 2.0
-                    print(l_x, r_x)
-                    distance = distance_calculator.calculate_distance(l_x, r_x)
-                    print("Distance from person: ", distance)
-                    distance_string = f" distance: {distance}"
+                    # l_x = (left_obj.location[0] + left_obj.location[2]) / 2.0
+                    # l_y = (left_obj.location[1] + left_obj.location[3]) / 2.0
+                    # r_x = (right_obj.location[0] + right_obj.location[2]) / 2.0
+                    # r_y = (right_obj.location[1] + right_obj.location[3]) / 2.0
+                    # # print("x1m, y1m, x2m, y2m", l_x, ",", l_y, ",", r_x, ",", r_y)
+                    # print(l_x, r_x)
+                    # distance = distance_calculator.calculate_distance(l_x, l_y, r_x, r_y)
+                    X, Y, Z, D = distance_calculator.calculate_distance(
+                        (left_obj.location[0] + left_obj.location[2]) / 2.0,
+                        (left_obj.location[1] + left_obj.location[3]) / 2.0,
+                        (right_obj.location[0] + right_obj.location[2]) / 2.0,
+                        (right_obj.location[1] + right_obj.location[3]) / 2.0)
+                    # print(f"Distance from {left_obj.obj_type}: {X}, {Y}, {Z}, {D}")
+                    distance_string = f" X: {X}, Y: {Y}, Z: {Z}, D: {D}"
                     left_obj.label += distance_string
                     right_obj.label += distance_string
+                    break
+            except Exception as e:
+                print(e)
+            right_results = right_results[right_index:]
 
 
 def put_results_on_frame(frame, results):
     for result in results:
         (startX, startY, endX, endY) = result.location
         cv2.rectangle(frame, (startX, startY), (endX, endY), result.color, 2)
-        y = startY - 15 if startY - 15 > 15 else startY + 15
-        cv2.putText(frame, result.label, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, result.color, 2)
-
-
+        # y = startY + 15 if startY + 15 < 640 else startY + 15
+        i = 2
+        for field in result.label.split(", "):
+            cv2.putText(frame, field, (startX + 15, startY + i * 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, result.color, 2)
+            i += 1
 
 def handle_stream(constants, screen):
     global THREADS
@@ -161,7 +176,8 @@ def handle_stream(constants, screen):
     LOCK.acquire()
     THREADS.append(depth_map_thread)
     LOCK.release()
-    distance_calculator = DistanceCalculator2()
+    distance_calculator = DistanceCalculator3()
+    # distance_calculator = DistanceCalculator()
     receiver1, receiver2 = initialize_receivers(constants)
     detector = ObjectDetector("image_processing/", CONFIDENCE)
     left_results = []
@@ -172,12 +188,14 @@ def handle_stream(constants, screen):
     running = RUNNING
     while running:
 
+        LOCK.acquire()
+
         # Get left frame
         if receiver1.frame_queue:
             left_ret = True
-            LOCK.acquire()
+            # LOCK.acquire()
             left_frame = receiver1.frame_queue.pop(0)
-            LOCK.release()
+            # LOCK.release()
             frame, left_results = detector.detect(left_frame)
 
         else:
@@ -186,9 +204,9 @@ def handle_stream(constants, screen):
         # Get right frame
         if receiver2.frame_queue:
             right_ret = True
-            LOCK.acquire()
+            # LOCK.acquire()
             right_frame = receiver2.frame_queue.pop(0)
-            LOCK.release()
+            # LOCK.release()
             frame, right_results = detector.detect(right_frame)
 
         else:
@@ -198,27 +216,22 @@ def handle_stream(constants, screen):
         if left_ret and right_ret:
 
             # Create depth map
-            LOCK.acquire()
+            # LOCK.acquire()
             FRAME_QUEUE.append((left_frame, right_frame))
             if DEPTH_MAP_QUEUE:
-                depth_map = DEPTH_MAP_QUEUE.pop(0)
                 if RUNNING:
+                    depth_map = DEPTH_MAP_QUEUE.pop(0)
                     depth_map_size = (300, 225)
                     blit_frame(screen, depth_map, depth_map_size, ((SCREEN_DIMENSIONS[0] - depth_map_size[0]) / 2, 550))
                 else:
                     break
-            LOCK.release()
-
-            # # left_results = list(filter(lambda a: "person" in a.label, left_results))
-            # # right_results = list(filter(lambda a: "person" in a.label, right_results))
-            # pairs, left_results, right_results = find_object_pairs(left_results, right_results)
-            # if left_results and right_results:
-            #     l_result = left_results[0]
-            #     r_result = right_results[0]
+            # LOCK.release()
 
             # Handle object detection and distance measurement
             find_object_pairs(left_frame, left_results, right_frame, right_results,
                               distance_calculator)  # Calculate distance from objects
+
+        LOCK.release()
 
         if left_frame is not None:
             if left_results:
@@ -231,23 +244,11 @@ def handle_stream(constants, screen):
             right_frame_size = (640, 480)
             blit_frame(screen, right_frame, right_frame_size, (SCREEN_DIMENSIONS[0] / 2 - right_frame_size[0], 50))
 
-        if not RUNNING:
-            pygame.quit()
-            sys.exit()
-
         pygame.display.flip()
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == pygame.JOYBUTTONDOWN and event.button == 7):
                 pygame.quit()
                 sys.exit()
-        # if cv2.waitKey(1) & 0xFF == ord('q'):
-        #     break
-        LOCK.acquire()
-        running = RUNNING
-        LOCK.release()
-
-
-        # time.sleep(1.0 / 24)
 
     pygame.quit()
     sys.exit()
@@ -279,8 +280,8 @@ def main():
     print("Starting main loop")
     while RUNNING:
         commands = gui_object.get_events()
-        if commands:
-            print(commands)
+        # if commands:
+        # print(commands)
         for command in commands:
             if command == Commands.TOGGLE_DEPTH_MAP:
                 pass
