@@ -17,7 +17,6 @@ class AESCipher(object):
         return base64.b64encode(iv + cipher.encrypt(raw))
 
     def decrypt(self, enc):
-        print(enc)
         enc = base64.b64decode(enc)
         iv = enc[:AES.block_size]
         cipher = AES.new(self.key, AES.MODE_CBC, iv)
