@@ -11,6 +11,14 @@ MAX_LENGTH = 65540
 class StreamReceiver:
 
     def __init__(self, host, port):
+        """
+        Initialize a StreamReceiver object
+        :param host: source host
+        :param port: source port
+        lock: threading.Lock() -> to handle common resources
+        frame_queue: queue of frames, keeping all frames that arrived.
+        running: bool. The receiver will work as long as running == True
+        """
         self.host = host
         self.port = port
         self.lock = threading.Lock()
@@ -18,6 +26,9 @@ class StreamReceiver:
         self.running = True
 
     def receive_stream(self):
+        """
+        Receive stream and append frames received to self.frame_queue
+        """
         frame_info = None
         buffer = None
         frame = None

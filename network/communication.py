@@ -3,11 +3,14 @@ import sys
 import threading
 from os import urandom
 
+from Crypto import Random
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
-from Crypto import Random
+
 from network.aes_utils import AESCipher
+
 RSA_KEY_SIZE = 128
+
 
 class TCPStream:
     """
@@ -135,6 +138,16 @@ class TCPServer(socket.socket):
 
     def __init__(self, address, recv_size, msg_code_size=4, msg_size_header_size=8, msg_chunk_size=1024, running=True,
                  listen_amount=5):
+        """
+        Initialize TCPServer object.
+        :param recv_size: how many bytes to receive every time
+        :param msg_code_size: size of msg_code
+        :param msg_size_header_size: size of msg_size_header
+        :param msg_chunk_size: size of msg_chunk
+        :param address: host address
+        :param running: Whether the server is running
+        :param listen_amount: How long to set the waiting line
+        """
         super().__init__()
         # self.tcp_stream = TCPStream(recv_size, msg_code_size, msg_size_header_size, msg_chunk_size)
         self.recv_size = recv_size
@@ -148,11 +161,18 @@ class TCPServer(socket.socket):
         self.lock = threading.Lock()
 
     def get_client(self):
+        """
+        :return: Waits until a client connects and returns a TCPStream object created from client
+        """
         while self.running:
             if isinstance(self.client_socket, socket.socket):
                 client_tcp_stream = TCPStream(self.client_socket, 1024, 4, 8, 1024, True)
                 return client_tcp_stream
+
     def run(self):
+        """
+        Accept new clients and store them in self.client_socket attribute.
+        """
         self.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.bind(self.address)
         self.listen(self.listen_amount)

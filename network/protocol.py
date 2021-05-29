@@ -7,6 +7,9 @@ class PICommunication:
     msg_header_size = msg_code_size + msg_size_header_size
 
     class MessageCode(Enum):
+        """
+        Enum class that contains a message code for each message type
+        """
         INITIALIZE_CAMERAS = "ICMS"  # = Choose camera to stream
         DISCONNECT = "DISC"  # = Disconnect
         ERROR = "ERRO"  # = Error
@@ -106,11 +109,20 @@ class PICommunication:
 
     @staticmethod
     def __format_message(code: MessageCode, content: bytes = b""):
+        """
+        :param code: message code
+        :param content: message content
+        :return: Message encoded. type: bytes
+        """
         code_value = code.value
         return code_value.encode() + content
 
     @staticmethod
     def parse_message(message: bytes):
+        """
+        :param message: message in bytes
+        :return: message code, content (in bytes)
+        """
         message = message.decode()
         code = message[:PICommunication.msg_code_size]
         content = message[PICommunication.msg_code_size:]

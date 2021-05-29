@@ -10,13 +10,21 @@ MAX_LENGTH = 65000
 class Streamer:
 
     def __init__(self, host, port):
+        """
+        Initialize a Streamer object
+        :param host: destination host
+        :param port: destination port
+        """
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         print(self.host, type(self.host), self.port, type(self.port))
         
     def send_frame(self, frame):
-
+        """
+        Send frame to destination
+        :param frame: numpy.ndarray, frame
+        """
         # compress frame
         retval, buffer = cv2.imencode(".jpg", frame)
 

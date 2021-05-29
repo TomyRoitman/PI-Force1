@@ -7,6 +7,9 @@ from network.protocol import PICommunication
 
 
 class Commands(Enum):
+    """
+    Contains all commands, and translates them to messages
+    """
     DISCONNECT = PICommunication.disconnect("Exit")  # = Disconnect
     HIGH_SPEED = PICommunication.set_high_speed()  # = Set high speed
     LOW_SPEED = PICommunication.set_low_speed()  # = Set low speed
@@ -30,6 +33,12 @@ class Gui:
     LOWER_BORDER = -0.7
 
     def __init__(self):
+        """
+        Initialize pygame gui.
+        controllers: list contains all controllers connected to pc
+        car_horizontal, car_vertical, camera_horizontal,camera_vertical -> bool, indicate if motion is already requested
+        in that axis
+        """
         pygame.init()
         print("init")
         (width, height) = (1600, 800)
@@ -51,6 +60,9 @@ class Gui:
         self.camera_vertical = False
 
     def get_events(self):
+        """
+        :return: Parse pygame events and return a list of commands requested by user
+        """
 
         controller = self.controllers[0]
         commands = []

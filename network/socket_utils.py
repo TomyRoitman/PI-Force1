@@ -5,6 +5,14 @@ from network.communication import TCPServer, UDPServer
 
 
 def initialize_server(constants, server_name, THREADS, new_thread=True):
+    """
+    Initialize and start a server
+    :param constants: json containing constants
+    :param server_name: which server of the constants to start
+    :param THREADS: global variable of a list of threads to add the server thread to
+    :param new_thread: bool, whether to open a new thread for server
+    :return: server object
+    """
     server_info = constants[server_name]
     print(f"[Log] - Started server - {server_info}")
     if server_info["type"] == "tcp":
