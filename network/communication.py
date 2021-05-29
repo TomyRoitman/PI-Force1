@@ -14,7 +14,7 @@ class TCPStream:
     Allowing tcp stream between client and server.
     """
 
-    def __init__(self, sock, recv_size, msg_code_size, msg_size_header_size, msg_chunk_size, is_server: bool = True):
+    def __init__(self, sock, recv_size, msg_code_size, msg_size_header_size, msg_chunk_size, is_server: bool = False):
         """
         Initialize TCPStream object
         :param sock: socket.socket
@@ -134,7 +134,7 @@ class TCPServer(socket.socket):
     def __init__(self, address, recv_size, msg_code_size=4, msg_size_header_size=8, msg_chunk_size=1024, running=True,
                  listen_amount=5):
         super().__init__()
-        self.tcp_stream = TCPStream(recv_size, msg_code_size, msg_size_header_size, msg_chunk_size)
+        # self.tcp_stream = TCPStream(recv_size, msg_code_size, msg_size_header_size, msg_chunk_size)
         self.recv_size = recv_size
         self.msg_code_size = msg_code_size
         self.msg_size_header_size = msg_size_header_size
@@ -148,8 +148,7 @@ class TCPServer(socket.socket):
     def get_client(self):
         while self.running:
             if isinstance(self.client_socket, socket.socket):
-                client_tcp_stream = TCPStream(self.client_socket, 1024, 4, 8, 1024)
-                client_tcp_stream.s
+                client_tcp_stream = TCPStream(self.client_socket, 1024, 4, 8, 1024, True)
                 return client_tcp_stream
     def run(self):
         self.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

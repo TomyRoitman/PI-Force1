@@ -272,7 +272,7 @@ def main():
 
     # time.sleep(7.0)
 
-    server_tcp_stream = TCPStream(server_socket, 1024, 4, 8, 1024)
+    server_tcp_stream = TCPStream(server_socket, 1024, 4, 8, 1024, False)
 
     print("[Log] Sending: Request for camera initialization")
     server_tcp_stream.send_by_size(PICommunication.initialize_cameras())
