@@ -25,6 +25,7 @@ class AESCipher(object):
         iv = enc[:AES.block_size]
         print(len(enc), len(iv))
         cipher = AES.new(self.key, AES.MODE_CBC, iv)
+        print(cipher.decrypt(enc[AES.block_size:]))
         return self._unpad(cipher.decrypt(enc[AES.block_size:]))
 
     def _pad(self, s):
