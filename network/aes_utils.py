@@ -8,6 +8,7 @@ class AESCipher(object):
     def __init__(self, key):
         self.bs = AES.block_size
         self.key = key
+        print("AES Key: ", key)
 
     def encrypt(self, raw):
         raw = self._pad(raw)
