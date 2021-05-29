@@ -2,10 +2,10 @@ import socket
 import sys
 import threading
 from os import urandom
-from random import Random
 
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
+from Crypto import Random
 from network.aes_utils import AESCipher
 RSA_KEY_SIZE = 64
 
