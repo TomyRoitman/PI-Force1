@@ -34,6 +34,10 @@ PROCESSES = []
 
 
 def main():
+    """
+    Main loop of the server. Receives commands from client and executes them on car.
+    """
+
     global RUNNING
     global PROCESSES
     global THREADS

@@ -19,10 +19,8 @@ class Car():
         self.__load_gpio_distribution()
 
         self.lock = threading.Lock()
-        # self.controllers = {}
         self.wheel_DC_motors = {}
         self.gyroscope_servo_motors = {}
-        # self.__initialize_wheel_controllers()
         self.__initialize_wheel_DC_motors()
         self.__initialize_servo_motors()
 
