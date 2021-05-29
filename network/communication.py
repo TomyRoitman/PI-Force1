@@ -32,11 +32,11 @@ class TCPStream:
         self.is_server = is_server
         self.aes_cipher = None
         if self.is_server:
-            self.generate_aes_key_for_server()
+            self.generate_aes_key_from_server_side()
         else:
-            self.generate_aes_key_for_client()
+            self.generate_aes_key_from_client_side()
 
-    def generate_aes_key_for_client(self):
+    def generate_aes_key_from_client_side(self):
         """
         Generate aes keys with RSA from client side
         :param is_server:
