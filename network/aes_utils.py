@@ -23,7 +23,6 @@ class AESCipher(object):
         return self._unpad(cipher.decrypt(enc[AES.block_size:]))
 
     def _pad(self, s):
-        print(chr(self.bs - len(s) % self.bs).encode())
         return s + (self.bs - len(s) % self.bs) * chr(self.bs - len(s) % self.bs).encode()
 
     @staticmethod

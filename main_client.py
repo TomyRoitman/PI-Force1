@@ -299,7 +299,7 @@ def main():
                 server_tcp_stream.send_by_size(command.value)
         if not RUNNING:
             break
-        time.sleep(1.0 / 24)
+        time.sleep(1.0 / 50)
     LOCK.acquire()
     RUNNING = False
     LOCK.release()
