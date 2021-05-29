@@ -124,10 +124,10 @@ class TCPStream:
         Sends message with the size in the beginning.
         :param message:
         """
-        header = str(len(message)).zfill(self.msg_size_header_size).encode()
-        self.sock.send(header)
         if self.aes_cipher is not None:
             message = self.aes_cipher.encrypt(message)
+        header = str(len(message)).zfill(self.msg_size_header_size).encode()
+        self.sock.send(header)
         chunks = self.__split_by_len(message, self.msg_chunk_size)
         for chunk in chunks:
             self.sock.send(chunk)
