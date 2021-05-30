@@ -138,7 +138,7 @@ class Gui:
                 if event.button == 2:
                     commands.append(Commands.TOGGLE_DISTANCE)
                 elif event.button == 3:
-                    commands.append(Commands.TOGGLE_DISTANCE.RESET_CAMERA_POSITION)
+                    commands.append(Commands.RESET_CAMERA_POSITION)
                 elif event.button == 4:
                     commands.append(Commands.TOGGLE_DEPTH_MAP)
                 elif event.button == 5:

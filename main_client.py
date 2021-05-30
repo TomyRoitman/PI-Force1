@@ -170,7 +170,7 @@ def put_results_on_frame(frame, results):
 
 def handle_stream(constants, screen):
     global THREADS
-
+    global FRAME_QUEUE
     depth_map_thread = threading.Thread(target=create_depth_map)
     depth_map_thread.start()
     LOCK.acquire()
