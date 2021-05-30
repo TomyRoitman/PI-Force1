@@ -1,5 +1,6 @@
 import pickle
 import socket
+import sys
 import threading
 
 import cv2
@@ -36,11 +37,13 @@ class StreamReceiver:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind((self.host, self.port))
-
+        sock.settimeout(0.5)
         print("-> waiting for connection", self.host, self.port)
         while self.running:
-            data, address = sock.recvfrom(MAX_LENGTH)
-
+            try:
+                data, address = sock.recvfrom(MAX_LENGTH)
+            except socket.error:
+                continue
             if len(data) < 100:
                 frame_info = pickle.loads(data)
 
@@ -48,8 +51,11 @@ class StreamReceiver:
                     nums_of_packs = frame_info["packs"]
 
                     for i in range(nums_of_packs):
-                        data, address = sock.recvfrom(MAX_LENGTH)
+                        try:
 
+                            data, address = sock.recvfrom(MAX_LENGTH)
+                        except socket.error:
+                            break
                         if i == 0:
                             buffer = data
                         else:
@@ -65,7 +71,6 @@ class StreamReceiver:
                         self.lock.acquire()
                         self.frame_queue.append(frame)
                         self.lock.release()
-
 
 def main():
     receiver1 = StreamReceiver('0.0.0.0', 5000)

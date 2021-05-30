@@ -206,7 +206,6 @@ class UDPServer(socket.socket):
 
     def __insert_message_to_queue(self, data):
         self.message_queue_lock.acquire()
-        # print("Appending data: ", data)
         self.message_queue.append(data)
         self.message_queue_lock.release()
 

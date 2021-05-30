@@ -60,17 +60,20 @@ SCREEN_DIMENSIONS = [1600, 800]
 
 
 def initialize_receivers(constants):
+    global RECEIVERS
     receiver1 = StreamReceiver('0.0.0.0', 5000)
     t1 = threading.Thread(target=receiver1.receive_stream)
-    THREADS.append(t1)
     t1.start()
 
     receiver2 = StreamReceiver('0.0.0.0', 5001)
     t2 = threading.Thread(target=receiver2.receive_stream)
-    THREADS.append(t2)
     t2.start()
 
-    return receiver1, receiver2
+    # LOCK.acquire()
+    # THREADS.append(t1)
+    # THREADS.append(t2)
+    # LOCK.release()
+    return receiver1, receiver2, t1, t2
 
 
 def create_depth_map():
@@ -89,7 +92,9 @@ def create_depth_map():
             DEPTH_MAP_QUEUE.append(depth_map)
         # cv2.waitKey(1)
         time.sleep(1.0 / 60)
-    sys.exit()
+    print(RUNNING, "Depth map")
+    # return
+    # sys.exit()
 
 
 def blit_frame(screen, frame, size, position):
@@ -168,25 +173,28 @@ def put_results_on_frame(frame, results):
             cv2.putText(frame, field, (startX + 15, startY + i * 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, result.color, 2)
             i += 1
 
+
 def handle_stream(constants, screen):
     global THREADS
     global FRAME_QUEUE
+
     depth_map_thread = threading.Thread(target=create_depth_map)
     depth_map_thread.start()
-    LOCK.acquire()
-    THREADS.append(depth_map_thread)
-    LOCK.release()
+
+    # LOCK.acquire()
+    # THREADS.append(depth_map_thread)
+    # LOCK.release()
+
     distance_calculator = DistanceCalculator3()
     # distance_calculator = DistanceCalculator()
-    receiver1, receiver2 = initialize_receivers(constants)
+    receiver1, receiver2, receiver_thread_1, receiver_thread_2 = initialize_receivers(constants)
     detector = ObjectDetector("image_processing/", CONFIDENCE)
     left_results = []
     right_results = []
     # screen.fill(BACKGROUND_COLOR)
     left_frame = None
     right_frame = None
-    running = RUNNING
-    while running:
+    while RUNNING:
 
         LOCK.acquire()
 
@@ -245,13 +253,23 @@ def handle_stream(constants, screen):
             blit_frame(screen, right_frame, right_frame_size, (SCREEN_DIMENSIONS[0] / 2 - right_frame_size[0], 50))
 
         pygame.display.flip()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT or (event.type == pygame.JOYBUTTONDOWN and event.button == 7):
-                pygame.quit()
-                sys.exit()
+        try:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT or (event.type == pygame.JOYBUTTONDOWN and event.button == 7):
+                    # pygame.quit()
+                    # sys.exit()
+                    break
+        except Exception as e:
+            print(e)
+            break
 
-    pygame.quit()
-    sys.exit()
+    print(RUNNING, "Handle Stream")
+    print("Stopping stream receivers")
+    receiver1.running = False
+    receiver2.running = False
+    receiver_thread_1.join()
+    receiver_thread_2.join()
+    depth_map_thread.join()
 
 
 def main():
@@ -292,20 +310,24 @@ def main():
             elif command == Commands.DISCONNECT:
                 server_tcp_stream.send_by_size(PICommunication.disconnect("Exit"))
                 server_socket.close()
-                pygame.quit()
-                sys.exit()
+                LOCK.acquire()
+                RUNNING = False
+                print("Set global variable RUNNING to False. RUNNING: ", RUNNING)
+                LOCK.release()
                 break
             else:
                 server_tcp_stream.send_by_size(command.value)
         if not RUNNING:
             break
         time.sleep(1.0 / 50)
-    LOCK.acquire()
     RUNNING = False
-    LOCK.release()
 
+    print(f"Waiting for {len(THREADS)} threads")
     for thread in THREADS:
         thread.join()
+
+    pygame.quit()
+    sys.exit()
 
 
 if __name__ == '__main__':
