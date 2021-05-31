@@ -19,11 +19,11 @@ DESTINATION_SIZE = (256, 192)
 # DESTINATION_SIZE = (256, 192)
 FPS = 24
 GPIO_PIN_DISTRIBUTION_PATH = "gpio_pin_distribution.json"
-LEFT_CAMERA_ADDRESS = "192.168.1.25:5000"
+LEFT_CAMERA_ADDRESS = "192.168.1.36:5000"
 LEFT_CAMERA_INDEX = 0
 LOCK = threading.Lock()
 PROCESSES = []
-RIGHT_CAMERA_ADDRESS = "192.168.1.25:5001"
+RIGHT_CAMERA_ADDRESS = "192.168.1.36:5001"
 CAMERA_ADDRESS = {"left": LEFT_CAMERA_ADDRESS, "right": RIGHT_CAMERA_ADDRESS}
 RIGHT_CAMERA_INDEX = 2
 RUNNING = True
@@ -48,8 +48,8 @@ def main():
     tcp_server = initialize_server(constants, "main_tcp_server", THREADS)
     # client_socket = tcp_server.get_client()
     # client_tcp_stream = TCPStream(client_socket, 1024, 4, 8, 1024)
-    client_tcp_stream = tcp_server.get_client()
-
+    client_tcp_stream, client_address  = tcp_server.get_client()
+    print("Client", client_address)
     car = Car()
 
     while RUNNING:
