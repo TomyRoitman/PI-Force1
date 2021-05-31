@@ -24,7 +24,7 @@ LEFT_CAMERA_INDEX = 0
 LOCK = threading.Lock()
 PROCESSES = []
 RIGHT_CAMERA_ADDRESS = "192.168.1.36:5001"
-CAMERA_ADDRESS = {"left": LEFT_CAMERA_ADDRESS, "right": RIGHT_CAMERA_ADDRESS}
+CAMERA_PORT = {"left": 5000, "right": 5001}
 RIGHT_CAMERA_INDEX = 2
 RUNNING = True
 # STREAM_FRAME_SHAPE = (192, 256, 3)
@@ -48,10 +48,11 @@ def main():
     tcp_server = initialize_server(constants, "main_tcp_server", THREADS)
     # client_socket = tcp_server.get_client()
     # client_tcp_stream = TCPStream(client_socket, 1024, 4, 8, 1024)
-    client_tcp_stream, client_address  = tcp_server.get_client()
+    client_tcp_stream, client_address = tcp_server.get_client()
     print("Client address: ", client_address)
     car = Car()
 
+    client_host = client_address[0]
     while RUNNING:
         content_length, content = client_tcp_stream.recv_by_size()
         code, message = PICommunication.parse_message(content)
@@ -94,7 +95,7 @@ def main():
                     else:
                         print("Initializing stream for camera: ", camera)
                         id = CAMERA_INDEX[camera]
-                        address = CAMERA_ADDRESS[camera]
+                        address = client_host + ":" + CAMERA_PORT[camera]
                         print(id, address)
                         LOCK.acquire()
                         p = Popen(['python3', 'network/streamer.py', '-a', address, '-i', str(id)])
