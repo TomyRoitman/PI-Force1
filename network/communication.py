@@ -158,6 +158,7 @@ class TCPServer(socket.socket):
         self.listen_amount = listen_amount
         self.running = True
         self.client_socket = None
+        self.client_address = "127.0.0.1"
         self.lock = threading.Lock()
 
     def get_client(self):
@@ -167,7 +168,7 @@ class TCPServer(socket.socket):
         while self.running:
             if isinstance(self.client_socket, socket.socket):
                 client_tcp_stream = TCPStream(self.client_socket, 1024, 4, 8, 1024, True)
-                return client_tcp_stream
+                return client_tcp_stream, self.client_address
 
     def run(self):
         """
@@ -176,9 +177,10 @@ class TCPServer(socket.socket):
         self.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.bind(self.address)
         self.listen(self.listen_amount)
-        client_socket, address = self.accept()
+        client_socket, client_address = self.accept()
         self.lock.acquire()
         self.client_socket = client_socket
+        self.client_address = client_address
         self.lock.release()
         #
         # while self.running:
