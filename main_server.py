@@ -95,7 +95,7 @@ def main():
                     else:
                         print("Initializing stream for camera: ", camera)
                         id = CAMERA_INDEX[camera]
-                        address = client_host + ":" + CAMERA_PORT[camera]
+                        address = client_host + ":" +str(CAMERA_PORT[camera])
                         print(id, address)
                         LOCK.acquire()
                         p = Popen(['python3', 'network/streamer.py', '-a', address, '-i', str(id)])
