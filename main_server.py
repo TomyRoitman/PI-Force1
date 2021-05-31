@@ -49,7 +49,7 @@ def main():
     # client_socket = tcp_server.get_client()
     # client_tcp_stream = TCPStream(client_socket, 1024, 4, 8, 1024)
     client_tcp_stream, client_address  = tcp_server.get_client()
-    print("Client", client_address)
+    print("Client address: ", client_address)
     car = Car()
 
     while RUNNING:
