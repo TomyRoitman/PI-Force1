@@ -92,7 +92,6 @@ def create_depth_map():
             DEPTH_MAP_QUEUE.append(depth_map)
         # cv2.waitKey(1)
         time.sleep(1.0 / 60)
-    print(RUNNING, "Depth map")
     # return
     # sys.exit()
 
