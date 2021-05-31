@@ -2,7 +2,7 @@ import sys
 from enum import Enum
 
 import pygame
-
+import platform
 from network.protocol import PICommunication
 
 
@@ -59,6 +59,18 @@ class Gui:
         self.camera_horizontal = False
         self.camera_vertical = False
 
+        self.platform_name = platform.platform()
+        self.axes = {}
+        self.buttons = {}
+        print("[Log] Running on: ", self.platform_name)
+        if "windows" in self.platform_name.lower():
+            self.axes = {"left_horizontal": 0, "left_vertical": 1, "right_horizontal": 2, "right_vertical": 3}
+            self.buttons = {"start": 7, 'Y': 3, 'X': 2, 'B': 1, 'A': 0}
+        else:
+            self.axes = {"left_horizontal": 0, "left_vertical": 1, "right_horizontal": 3, "right_vertical": 4}
+            self.buttons = {"start": 8, 'Y': 3, 'X': 2, 'B': 1, 'A': 0}
+
+
     def get_events(self):
         """
         :return: Parse pygame events and return a list of commands requested by user
@@ -70,7 +82,7 @@ class Gui:
         if not controller:
             return commands
 
-        left_joystick_axes = {i: controller.get_axis(i) for i in range(0, 2)}
+        left_joystick_axes = {i: controller.get_axis(i) for i in (self.axes["left_horizontal"], self.axes["left_vertical"])}
         l = list(left_joystick_axes.items())
         l.sort(key=lambda item: abs(item[1]), reverse=True)
         if l:
@@ -78,7 +90,7 @@ class Gui:
             # if len(left_joystick_axes) > 0:
 
             # Left horizontal
-            if biggest_left[0] == 0:
+            if biggest_left[0] == self.axes["left_horizontal"]:
                 if biggest_left[1] > Gui.UPPER_BORDER:
                     commands.append(Commands.TURN_RIGHT)
                     self.car_horizontal = True
@@ -90,7 +102,7 @@ class Gui:
                     self.car_horizontal = False
 
             # Left vertical
-            elif biggest_left[0] == 1:
+            elif biggest_left[0] == self.axes["left_vertical"]:
                 if biggest_left[1] > Gui.UPPER_BORDER:
                     commands.append(Commands.MOVE_BACKWARDS)
                     self.car_vertical = True
@@ -101,7 +113,7 @@ class Gui:
                     commands.append(Commands.STOP)
                     self.car_vertical = False
 
-        right_joystick_axes = {i: controller.get_axis(i) for i in range(2, 4)}
+        right_joystick_axes = {i: controller.get_axis(i) for i in (self.axes["right_horizontal"], self.axes["right_vertical"])}
         l = list(right_joystick_axes.items())
         l.sort(key=lambda item: abs(item[1]), reverse=True)
         if l:
@@ -110,7 +122,7 @@ class Gui:
             biggest_right = l[0]
 
             # Right horizontal
-            if biggest_right[0] == 2:
+            if biggest_right[0] == self.axes["right_horizontal"]:
                 if biggest_right[1] > Gui.UPPER_BORDER:
                     commands.append(Commands.CAMERA_RIGHT)
                     self.camera_horizontal = True
@@ -122,7 +134,7 @@ class Gui:
                     self.camera_horizontal = False
 
             # Right vertical
-            elif biggest_right[0] == 3:
+            elif biggest_right[0] == self.axes["right_vertical"]:
                 if biggest_right[1] > Gui.UPPER_BORDER:
                     commands.append(Commands.CAMERA_DOWN)
                     self.camera_vertical = True
@@ -137,13 +149,13 @@ class Gui:
             if event.type == pygame.JOYBUTTONDOWN:
                 if event.button == 2:
                     commands.append(Commands.TOGGLE_DISTANCE)
-                elif event.button == 3:
+                elif event.button == self.buttons["Y"]:
                     commands.append(Commands.RESET_CAMERA_POSITION)
                 elif event.button == 4:
                     commands.append(Commands.TOGGLE_DEPTH_MAP)
                 elif event.button == 5:
                     commands.append(Commands.TOGGLE_OBJECT_DETECTION)
-                elif event.button == 7:
+                elif event.button == self.buttons["start"]:
                     commands.append(Commands.DISCONNECT)
             elif event.type == pygame.QUIT:
                 pygame.quit()
