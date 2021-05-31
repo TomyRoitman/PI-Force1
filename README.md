@@ -1,4 +1,5 @@
 # PI-Force1
+![Alt text](car_photo.jpg?raw=true "PI-Force1")
 Autonomous car and tank system designed for raspberry pi.
 
 ## Server on RaspberryPI:
